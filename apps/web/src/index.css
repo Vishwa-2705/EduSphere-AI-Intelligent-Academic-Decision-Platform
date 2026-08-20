@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    font-family: 'Times New Roman', Times, Georgia, serif;
+    @apply bg-[#f6f7fb] text-slate-900 antialiased text-base;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Times New Roman', Times, Georgia, serif;
+    @apply font-bold tracking-tight text-slate-900;
+  }
+
+  input, select, textarea, button {
+    font-family: 'Times New Roman', Times, Georgia, serif;
+  }
+}
+
+/* Common Card & Panel Styles matching login page */
+.edusphere-card {
+  @apply bg-white border border-slate-200/80 shadow-sm rounded-2xl transition duration-200;
+}
+
+.edusphere-card-header {
+  @apply px-6 py-4 border-b border-slate-100 flex items-center justify-between;
+}
+
+/* Badges */
+.badge-indigo {
+  @apply bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2.5 py-0.5 rounded-lg text-xs font-bold font-serif;
+}
+
+.badge-purple {
+  @apply bg-purple-50 text-purple-700 border border-purple-200/80 px-2.5 py-0.5 rounded-lg text-xs font-bold font-serif;
+}
+
+.badge-emerald {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 rounded-lg text-xs font-bold font-serif;
+}
+
+.badge-amber {
+  @apply bg-amber-50 text-amber-700 border border-amber-200/80 px-2.5 py-0.5 rounded-lg text-xs font-bold font-serif;
+}
+
+.badge-rose {
+  @apply bg-rose-50 text-rose-700 border border-rose-200/80 px-2.5 py-0.5 rounded-lg text-xs font-bold font-serif;
+}
+
+.badge-slate {
+  @apply bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-lg text-xs font-bold font-serif;
+}
+
+/* Tables */
+.edusphere-table {
+  @apply w-full text-left border-collapse text-sm;
+}
+
+.edusphere-table th {
+  @apply bg-slate-50/80 text-slate-600 font-bold uppercase text-[11px] tracking-wider px-4 py-3 border-b border-slate-200/80;
+}
+
+.edusphere-table td {
+  @apply px-4 py-3.5 border-b border-slate-100 text-slate-700;
+}
+
+.edusphere-table tr:hover {
+  @apply bg-indigo-50/30;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

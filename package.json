@@ -1,0 +1,24 @@
+{
+  "name": "edusphere-ai",
+  "version": "1.0.0",
+  "description": "EduSphere AI: Intelligent Academic Decision Platform",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:server": "npm run dev --workspace=apps/server",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces",
+    "seed": "npm run seed --workspace=apps/server"
+  },
+  "keywords": [
+    "education",
+    "college-management",
+    "ai-decision-support",
+    "academic-erp"
+  ],
+  "author": "EduSphere AI Team",
+  "license": "ISC"
+}
