@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const attendance_controller_1 = require("../controllers/attendance.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const rbac_middleware_1 = require("../middlewares/rbac.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get('/my-record', attendance_controller_1.getMyAttendance);
+router.get('/course/:courseId', attendance_controller_1.getCourseAttendance);
+router.post('/sessions', (0, rbac_middleware_1.authorizeRoles)(['FACULTY', 'ADMIN']), attendance_controller_1.createAttendanceSession);
+router.get('/alerts', attendance_controller_1.getAttendanceAlerts);
+exports.default = router;

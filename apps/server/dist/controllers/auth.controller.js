@@ -3,9 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.refreshToken = exports.getMe = exports.login = void 0;
+exports.logout = exports.refreshToken = exports.getMe = exports.login = exports.changePassword = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const zod_1 = require("zod");
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const User_1 = require("../models/User");
 const Profile_1 = require("../models/Profile");
 const env_1 = require("../config/env");
@@ -19,6 +20,49 @@ const generateTokens = (userId, email, role) => {
     const refreshToken = jsonwebtoken_1.default.sign({ userId, email, role }, env_1.ENV.JWT_REFRESH_SECRET, { expiresIn: '7d' });
     return { accessToken, refreshToken };
 };
+const changePasswordSchema = zod_1.z.object({
+    currentPassword: zod_1.z.string().min(1, 'Current password is required'),
+    newPassword: zod_1.z.string().min(8, 'New password must be at least 8 characters long'),
+    confirmPassword: zod_1.z.string().min(1, 'Please confirm the new password'),
+});
+const changePassword = async (req, res, next) => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, message: 'Authentication required.' });
+            return;
+        }
+        const { currentPassword, newPassword, confirmPassword } = changePasswordSchema.parse(req.body);
+        if (newPassword !== confirmPassword) {
+            res.status(400).json({ success: false, message: 'New password and confirm password do not match.' });
+            return;
+        }
+        const user = await User_1.User.findById(req.user.userId);
+        if (!user) {
+            res.status(404).json({ success: false, message: 'User not found.' });
+            return;
+        }
+        const isCurrentValid = await user.comparePassword(currentPassword);
+        if (!isCurrentValid) {
+            res.status(400).json({ success: false, message: 'Current password is incorrect.' });
+            return;
+        }
+        if (currentPassword === newPassword) {
+            res.status(400).json({ success: false, message: 'New password must be different from the current password.' });
+            return;
+        }
+        const salt = await bcryptjs_1.default.genSalt(10);
+        user.passwordHash = await bcryptjs_1.default.hash(newPassword, salt);
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: 'Password changed successfully. Use the new password to sign in next time.',
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.changePassword = changePassword;
 const login = async (req, res, next) => {
     try {
         const { email, password, role } = loginSchema.parse(req.body);

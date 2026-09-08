@@ -18,6 +18,7 @@ export interface IProfile extends Document {
   parentPhone?: string;
   parentEmail?: string;
   address?: string;
+  studentType?: 'RESIDENTIAL' | 'DAY_SCHOLAR';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,6 +97,11 @@ const ProfileSchema = new Schema<IProfile>(
     address: {
       type: String,
       default: '',
+    },
+    studentType: {
+      type: String,
+      enum: ['RESIDENTIAL', 'DAY_SCHOLAR'],
+      default: 'RESIDENTIAL',
     },
   },
   {

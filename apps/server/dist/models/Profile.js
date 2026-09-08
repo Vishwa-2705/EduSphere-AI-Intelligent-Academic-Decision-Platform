@@ -109,6 +109,11 @@ const ProfileSchema = new mongoose_1.Schema({
         type: String,
         default: '',
     },
+    studentType: {
+        type: String,
+        enum: ['RESIDENTIAL', 'DAY_SCHOLAR'],
+        default: 'RESIDENTIAL',
+    },
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

@@ -15,6 +15,8 @@ export interface Department {
   establishedYear: number;
 }
 
+export type FacultyRoleLevel = 'HOD' | 'FACULTY' | 'MENTOR' | 'WARDEN';
+
 export interface Profile {
   _id: string;
   user: string;
@@ -33,6 +35,10 @@ export interface Profile {
   parentName?: string;
   parentPhone?: string;
   address?: string;
+  facultyRole?: FacultyRoleLevel;
+  isMentor?: boolean;
+  isWarden?: boolean;
+  subRoles?: FacultyRoleLevel[];
 }
 
 export interface AuthResponse {

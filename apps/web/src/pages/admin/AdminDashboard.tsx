@@ -78,11 +78,11 @@ export const AdminDashboard: React.FC = () => {
   const alerts = data?.recentSystemAlerts || [];
 
   const auditLogs = [
-    { action: 'Student Login: student@edusphere.ai', time: 'Just now', type: 'AUTH', status: 'success' },
+    { action: 'Student Login: aarav@edusphere.ai', time: 'Just now', type: 'AUTH', status: 'success' },
     { action: 'Faculty Login: faculty@edusphere.ai', time: '2 min ago', type: 'AUTH', status: 'success' },
     { action: 'Mentor Login: mentor@edusphere.ai', time: '5 min ago', type: 'AUTH', status: 'success' },
     { action: 'Admin Login: admin@edusphere.ai', time: '10 min ago', type: 'AUTH', status: 'success' },
-    { action: 'DB Seed: 4 demo users initialized', time: '15 min ago', type: 'SYSTEM', status: 'info' },
+    { action: 'Account directory initialized', time: '15 min ago', type: 'SYSTEM', status: 'info' },
   ];
 
   const infraStatus = [

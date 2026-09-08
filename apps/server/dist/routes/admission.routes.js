@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const admission_controller_1 = require("../controllers/admission.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const rbac_middleware_1 = require("../middlewares/rbac.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get('/applications', (0, rbac_middleware_1.authorizeRoles)(['ADMIN']), admission_controller_1.getAdmissionApplications);
+router.put('/applications/:applicationId', (0, rbac_middleware_1.authorizeRoles)(['ADMIN']), admission_controller_1.updateApplicationStatus);
+router.post('/applications/:applicationId/provision', (0, rbac_middleware_1.authorizeRoles)(['ADMIN']), admission_controller_1.provisionStudentFromAdmission);
+exports.default = router;

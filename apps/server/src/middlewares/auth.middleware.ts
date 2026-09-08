@@ -57,7 +57,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
   }
 };
 
-export const authorizeRoles = (...allowedRoles: UserRole[]) => {
+export const authorizeRoles = (roles: UserRole[] | UserRole, ...extraRoles: UserRole[]) => {
+  const allowed = Array.isArray(roles) ? roles : [roles, ...extraRoles];
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
@@ -67,10 +68,10 @@ export const authorizeRoles = (...allowedRoles: UserRole[]) => {
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!allowed.includes(req.user.role)) {
       res.status(403).json({
         success: false,
-        message: `Forbidden. Role '${req.user.role}' does not have access to this resource. Required roles: ${allowedRoles.join(', ')}`,
+        message: `Forbidden. Role '${req.user.role}' does not have access to this resource. Required roles: ${allowed.join(', ')}`,
       });
       return;
     }

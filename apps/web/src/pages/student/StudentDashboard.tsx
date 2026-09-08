@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../services/api';
+import { jsPDF } from 'jspdf';
+import api, { isDemoSession } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { getStudentRecord } from '../../data/studentData';
 import { MetricCard } from '../../components/common/MetricCard';
 import {
   CalendarCheck,
@@ -23,21 +25,123 @@ import {
 import clsx from 'clsx';
 
 export const StudentDashboard: React.FC = () => {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
+  const student = getStudentRecord(user?.email);
   const [data, setData] = useState<any>(null);
+  const [feeInvoice, setFeeInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const feeSummary = feeInvoice?.invoice || {
+    totalAmount: student.totalFee,
+    paidAmount: student.paidFee,
+    balanceAmount: student.balanceFee,
+    tuitionFee: student.tuitionFee,
+    laboratoryFee: student.laboratoryFee,
+    hostelFee: student.hostelFee,
+    libraryFee: student.libraryFee,
+    status: student.balanceFee === 0 ? 'PAID' : 'PENDING',
+    transactions: [{ transactionId: student.transactionId, amount: student.paidFee, paymentMethod: student.paymentMethod, receiptNumber: `REC-${new Date().getFullYear()}-${student.registerNumber}-${Math.floor(1000 + Math.random() * 9000)}` }],
+  };
+
+  const downloadOfficialFeeReceipt = () => {
+    const formatMoney = (value: number) => value.toLocaleString('en-IN');
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 42;
+
+    doc.setFillColor(109, 93, 230);
+    doc.rect(0, 0, pageWidth, 84, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text('EduSphere AI', margin, 34);
+    doc.setFontSize(12);
+    doc.text('Official Fee Receipt', margin, 58);
+
+    doc.setTextColor(28, 38, 54);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Receipt No: ${feeSummary.transactions?.[0]?.receiptNumber || `REC-2026-${student.registerNumber}-${Math.floor(1000 + Math.random() * 9000)}`}`, margin, 110);
+    doc.text(`Issue Date: ${new Date().toLocaleDateString()}`, margin, 126);
+    doc.text(`Student: ${student.name}`, margin, 150);
+    doc.text(`Register No: ${student.registerNumber}`, margin, 166);
+    doc.text(`Programme: ${student.programme}`, margin, 182);
+    doc.text(`Semester: ${student.semester}`, margin, 198);
+
+    let y = 228;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Fee Breakdown', margin, y);
+    y += 18;
+
+    const rows = [
+      [`${student.semester} Tuition & Academic Instruction Fee`, Number(feeSummary.tuitionFee || student.tuitionFee)],
+      ['Laboratory, Hardware & Computing Center Fee', Number(feeSummary.laboratoryFee || student.laboratoryFee)],
+      ['Hostel Accommodation & Utility Maintenance', Number(feeSummary.hostelFee || student.hostelFee)],
+      ['University Digital Library & Online Journal Access', Number(feeSummary.libraryFee || student.libraryFee)],
+    ];
+
+    doc.setFont('helvetica', 'normal');
+    rows.forEach(([label, value]) => {
+      const text = formatMoney(Number(value));
+      doc.text(label.toString(), margin, y);
+      doc.text(text.replace(/'/g, ''), pageWidth - margin - 80, y, { align: 'right' });
+      y += 18;
+    });
+
+    y += 12;
+    doc.setDrawColor(202, 202, 202);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 18;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total Amount', margin, y);
+    doc.text(formatMoney(Number(feeSummary.totalAmount || student.totalFee)).replace(/'/g, ''), pageWidth - margin - 80, y, { align: 'right' });
+    y += 18;
+    doc.text('Paid Amount', margin, y);
+    doc.text(formatMoney(Number(feeSummary.paidAmount || student.paidFee)).replace(/'/g, ''), pageWidth - margin - 80, y, { align: 'right' });
+    y += 18;
+    doc.text('Outstanding Balance', margin, y);
+    doc.text(formatMoney(Number(feeSummary.balanceAmount || student.balanceFee)).replace(/'/g, ''), pageWidth - margin - 80, y, { align: 'right' });
+
+    y += 30;
+    doc.text('Payment Status', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(feeSummary.status === 'PAID' ? 'PAID AND CLEARED' : 'PENDING', pageWidth - margin - 120, y, { align: 'right' });
+
+    y += 24;
+    doc.text(`Transaction ID: ${feeSummary.transactions?.[0]?.transactionId || student.transactionId}`, margin, y);
+    y += 16;
+    doc.text(`Payment Method: ${feeSummary.transactions?.[0]?.paymentMethod || student.paymentMethod}`, margin, y);
+
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(90, 90, 90);
+    doc.text('This is a computer-generated receipt valid for official academic records.', margin, 760);
+
+    doc.save('official-fee-receipt.pdf');
+  };
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/dashboard/student');
-        if (res.data.success) {
-          setData(res.data.data);
+        const [dashboardRes, feesRes] = await Promise.all([
+          api.get('/dashboard/student'),
+          api.get('/fees/my-invoice'),
+        ]);
+
+        if (dashboardRes.data.success) {
+          setData(dashboardRes.data.data);
+        }
+
+        if (feesRes.data.success) {
+          setFeeInvoice(feesRes.data.data);
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load student academic records.');
+        if (!isDemoSession()) {
+          setError(err.response?.data?.message || 'Failed to load student academic records.');
+        }
       } finally {
         setLoading(false);
       }
@@ -82,6 +186,7 @@ export const StudentDashboard: React.FC = () => {
   const riskScore = data?.riskScore;
   const mentor = data?.mentor;
   const todaySchedule = data?.todaySchedule || [];
+  const isFeePaid = Number(feeSummary.balanceAmount || student.balanceFee) === 0 || feeSummary.status === 'PAID';
 
   const upcomingExams = [
     { code: 'CS401', subject: 'Design & Analysis of Algorithms', date: 'March 14, 2026', time: '09:30 AM - 12:30 PM', venue: 'Exam Hall 3', weight: '30%' },
@@ -103,13 +208,13 @@ export const StudentDashboard: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/80 text-xs font-bold text-indigo-700 mb-2">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Academic Session 2025–2026 • Semester VI</span>
+              <span>{student.academicYear} • Semester {student.semester}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Welcome back, {profile?.fullName || 'Aarav Patel'} 👋
+              Welcome back, {student.name} 👋
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Programme: <strong className="text-slate-800">B.Tech Computer Science & Engineering</strong> • Semester: <strong className="text-slate-800">VI (Sec {profile?.section || 'A'})</strong> • Department: <strong className="text-slate-800">Dept. of Computer Science</strong> • Register No: <strong className="text-indigo-600 font-mono">{profile?.registrationNo || '22CS084'}</strong>
+              Programme: <strong className="text-slate-800">{student.programme}</strong> • Semester: <strong className="text-slate-800">{student.semester} (Sec {profile?.section || 'A'})</strong> • Department: <strong className="text-slate-800">{student.department}</strong> • Register No: <strong className="text-indigo-600 font-mono">{student.registerNumber}</strong>
             </p>
           </div>
 
@@ -409,28 +514,28 @@ export const StudentDashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Assigned Faculty Mentor</h3>
-                <p className="text-xs text-slate-500">1-on-1 Academic Counseling & Guidance</p>
+                <p className="text-xs text-slate-500">{student.mentorDepartment}</p>
               </div>
             </div>
 
             <div className="mt-4 space-y-3 text-xs font-serif">
               <div>
-                <h4 className="text-base font-bold text-slate-900">{mentor?.name || 'Prof. Anita Verma'}</h4>
-                <p className="text-slate-500">{mentor?.designation || 'Senior Faculty Mentor & Counselor'}</p>
+                <h4 className="text-base font-bold text-slate-900">{student.mentorName}</h4>
+                <p className="text-slate-500">{student.mentorDesignation}</p>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-slate-100 text-slate-600">
                 <div className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>{mentor?.email || 'mentor@edusphere.ai'}</span>
+                  <span>{student.mentorEmail}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>{mentor?.phone || '+91 97654 32109'}</span>
+                  <span>{student.mentorContact}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>{mentor?.cabin || 'Mentorship Center, Desk 04'}</span>
+                  <span>{student.mentorHours}</span>
                 </div>
               </div>
 
@@ -457,19 +562,21 @@ export const StudentDashboard: React.FC = () => {
             <div className="mt-4 space-y-3 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-50">
                 <span className="text-slate-500">Total Assessed Fee:</span>
-                <span className="font-bold text-slate-900">$4,500.00</span>
+                <span className="font-bold text-slate-900">₹{Number(feeSummary.totalAmount || student.totalFee).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-50">
                 <span className="text-slate-500">Total Paid:</span>
-                <span className="font-bold text-emerald-600">$4,500.00</span>
+                <span className="font-bold text-emerald-600">₹{Number(feeSummary.paidAmount || student.paidFee).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-1 font-bold">
                 <span className="text-slate-700">Pending Dues:</span>
-                <span className="text-emerald-600 font-mono">$0.00 (Fully Cleared)</span>
+                <span className={isFeePaid ? 'text-emerald-600 font-mono' : 'text-amber-600 font-mono'}>
+                  ₹{Number(feeSummary.balanceAmount || student.balanceFee).toLocaleString('en-IN')} {isFeePaid ? '(Fully Cleared)' : '(Outstanding)'}
+                </span>
               </div>
 
               <div className="pt-2">
-                <button className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition border border-slate-200 flex items-center justify-center gap-1.5">
+                <button onClick={downloadOfficialFeeReceipt} className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition border border-slate-200 flex items-center justify-center gap-1.5">
                   <Download className="h-3.5 w-3.5" />
                   <span>Download Official Fee Receipt</span>
                 </button>

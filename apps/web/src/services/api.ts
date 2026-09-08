@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+export const isDemoSession = () => localStorage.getItem('edusphere_access_token')?.startsWith('demo-') === true;
+
 const api = axios.create({
   baseURL: '/api/v1',
   headers: {
@@ -12,7 +14,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('edusphere_access_token');
-    if (token && config.headers) {
+    if (token && !token.startsWith('demo-') && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -25,6 +27,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    if (isDemoSession()) {
+      return Promise.reject(error);
+    }
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {

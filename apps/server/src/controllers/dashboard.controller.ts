@@ -9,6 +9,66 @@ import { MentorAllocation, InterventionLog } from '../models/Mentorship';
 import { RiskScore } from '../models/RiskScore';
 import { Exam, GradeEntry } from '../models/Exam';
 
+const getStudentDashboardConfig = (profile: any) => {
+  const registrationNo = profile?.registrationNo || '22CS084';
+  const departmentName = (profile?.department as any)?.name || 'Computer Science & Engineering';
+
+  if (registrationNo.includes('22EC')) {
+    return {
+      cgpa: 9.22,
+      currentSemesterSgpa: 9.14,
+      overallAttendance: 94,
+      totalCoursesEnrolled: 6,
+      creditsCompleted: 102,
+      totalCreditsRequired: 160,
+      pendingFeeDue: 0,
+      schedule: [
+        { courseCode: 'EC401', courseName: 'Digital Signal Processing', time: '09:00 AM - 10:00 AM', room: 'ECE Lab 2', facultyName: 'Dr. Neha Iyer', status: 'Upcoming' },
+        { courseCode: 'EC402', courseName: 'Microprocessors & Embedded Systems', time: '10:15 AM - 11:15 AM', room: 'Hall E-204', facultyName: 'Prof. Vinay Shah', status: 'Upcoming' },
+        { courseCode: 'EC403', courseName: 'Wireless Communication', time: '11:30 AM - 01:30 PM', room: 'RF Lab 1', facultyName: 'Dr. Meera Nair', status: 'Upcoming' },
+      ],
+      academicLabel: `Academic Session 2025–2026 • ${profile?.currentSemester || 6}th Semester`,
+      departmentDisplay: departmentName,
+    };
+  }
+
+  if (registrationNo.includes('22ME')) {
+    return {
+      cgpa: 8.62,
+      currentSemesterSgpa: 8.72,
+      overallAttendance: 90,
+      totalCoursesEnrolled: 5,
+      creditsCompleted: 96,
+      totalCreditsRequired: 160,
+      pendingFeeDue: 0,
+      schedule: [
+        { courseCode: 'ME401', courseName: 'Thermal Engineering', time: '09:00 AM - 10:00 AM', room: 'Heat Transfer Lab', facultyName: 'Dr. Arjun Rao', status: 'Upcoming' },
+        { courseCode: 'ME402', courseName: 'Manufacturing Technology', time: '10:15 AM - 11:15 AM', room: 'Workshop Hall', facultyName: 'Prof. Mohan Verma', status: 'Upcoming' },
+        { courseCode: 'ME403', courseName: 'CAD / CAM', time: '11:30 AM - 01:30 PM', room: 'Design Studio 3', facultyName: 'Dr. Suma Nair', status: 'Upcoming' },
+      ],
+      academicLabel: `Academic Session 2025–2026 • ${profile?.currentSemester || 6}th Semester`,
+      departmentDisplay: departmentName,
+    };
+  }
+
+  return {
+    cgpa: 8.92,
+    currentSemesterSgpa: 8.88,
+    overallAttendance: 92,
+    totalCoursesEnrolled: 5,
+    creditsCompleted: 98,
+    totalCreditsRequired: 160,
+    pendingFeeDue: 0,
+    schedule: [
+      { courseCode: 'CS401', courseName: 'Design & Analysis of Algorithms', time: '09:00 AM - 10:00 AM', room: 'Lab 302 (Computing Center)', facultyName: 'Dr. Rajesh Sharma', status: 'Upcoming' },
+      { courseCode: 'CS402', courseName: 'Database Management Systems', time: '10:15 AM - 11:15 AM', room: 'Hall B-204', facultyName: 'Prof. Anita Verma', status: 'Upcoming' },
+      { courseCode: 'CS403', courseName: 'Artificial Intelligence & Machine Learning', time: '11:30 AM - 01:30 PM', room: 'AI Lab 1', facultyName: 'Dr. Vikram Sethi', status: 'Upcoming' },
+    ],
+    academicLabel: `Academic Session 2025–2026 • ${profile?.currentSemester || 6}th Semester`,
+    departmentDisplay: departmentName,
+  };
+};
+
 export const getStudentDashboard = async (
   req: Request,
   res: Response,
@@ -17,6 +77,7 @@ export const getStudentDashboard = async (
   try {
     const userId = req.user?.userId;
     const profile = await Profile.findOne({ user: userId }).populate('department');
+    const dashboardConfig = getStudentDashboardConfig(profile);
     
     // Fetch enrollments with course details
     const enrollments = await Enrollment.find({ student: userId })
@@ -44,46 +105,20 @@ export const getStudentDashboard = async (
     const attendedClasses = enrollments.reduce((acc, curr) => acc + (curr.attendedClasses || 0), 0);
     const overallAttendancePercent = totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 88;
 
-    // Upcoming schedule mock data tailored to semester
-    const todaySchedule = [
-      {
-        courseCode: 'CS401',
-        courseName: 'Design & Analysis of Algorithms',
-        time: '09:00 AM - 10:00 AM',
-        room: 'Lab 302 (Computing Center)',
-        facultyName: 'Dr. Rajesh Sharma',
-        status: 'Upcoming',
-      },
-      {
-        courseCode: 'CS402',
-        courseName: 'Database Management Systems',
-        time: '10:15 AM - 11:15 AM',
-        room: 'Hall B-204',
-        facultyName: 'Prof. Anita Verma',
-        status: 'Upcoming',
-      },
-      {
-        courseCode: 'CS403',
-        courseName: 'Artificial Intelligence & Machine Learning',
-        time: '11:30 AM - 01:30 PM',
-        room: 'AI Lab 1',
-        facultyName: 'Dr. Vikram Sethi',
-        status: 'Upcoming',
-      },
-    ];
+    const todaySchedule = dashboardConfig.schedule;
 
     res.status(200).json({
       success: true,
       data: {
         profile,
         metrics: {
-          cgpa: 8.42,
-          currentSemesterSgpa: 8.65,
+          cgpa: dashboardConfig.cgpa,
+          currentSemesterSgpa: dashboardConfig.currentSemesterSgpa,
           overallAttendance: overallAttendancePercent,
-          totalCoursesEnrolled: enrollments.length || 5,
-          creditsCompleted: 98,
-          totalCreditsRequired: 160,
-          pendingFeeDue: 0,
+          totalCoursesEnrolled: enrollments.length || dashboardConfig.totalCoursesEnrolled,
+          creditsCompleted: dashboardConfig.creditsCompleted,
+          totalCreditsRequired: dashboardConfig.totalCreditsRequired,
+          pendingFeeDue: dashboardConfig.pendingFeeDue,
         },
         enrollments,
         riskScore: riskScore || {

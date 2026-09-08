@@ -1,0 +1,23 @@
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+COPY apps/server/package*.json ./apps/server/
+RUN npm install --workspace=apps/server
+
+# Copy source and build
+COPY apps/server ./apps/server
+RUN npm run build --workspace=apps/server
+
+# Production image
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/apps/server/package*.json ./apps/server/
+COPY --from=builder /app/apps/server/dist ./apps/server/dist
+RUN cd apps/server && npm install --omit=dev
+
+EXPOSE 5000
+CMD ["node", "apps/server/dist/index.js"]

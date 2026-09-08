@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { User, UserRole } from '../models/User';
 import { Profile } from '../models/Profile';
 import { ENV } from '../config/env';
@@ -25,6 +26,55 @@ const generateTokens = (userId: string, email: string, role: UserRole) => {
   );
 
   return { accessToken, refreshToken };
+};
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters long'),
+  confirmPassword: z.string().min(1, 'Please confirm the new password'),
+});
+
+export const changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Authentication required.' });
+      return;
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = changePasswordSchema.parse(req.body);
+    if (newPassword !== confirmPassword) {
+      res.status(400).json({ success: false, message: 'New password and confirm password do not match.' });
+      return;
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found.' });
+      return;
+    }
+
+    const isCurrentValid = await user.comparePassword(currentPassword);
+    if (!isCurrentValid) {
+      res.status(400).json({ success: false, message: 'Current password is incorrect.' });
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      res.status(400).json({ success: false, message: 'New password must be different from the current password.' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully. Use the new password to sign in next time.',
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

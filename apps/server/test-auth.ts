@@ -8,7 +8,7 @@ async function testAllLogins() {
   console.log('Connected to MongoDB for login verification.');
 
   const accounts = [
-    { role: 'STUDENT', email: 'student@edusphere.ai', pass: 'Student@12345' },
+    { role: 'STUDENT', email: 'aarav@edusphere.ai', pass: 'Student@12345' },
     { role: 'FACULTY', email: 'faculty@edusphere.ai', pass: 'Faculty@12345' },
     { role: 'MENTOR', email: 'mentor@edusphere.ai', pass: 'Mentor@12345' },
     { role: 'ADMIN', email: 'admin@edusphere.ai', pass: 'Admin@12345' },

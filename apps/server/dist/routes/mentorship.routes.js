@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const mentorship_controller_1 = require("../controllers/mentorship.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const rbac_middleware_1 = require("../middlewares/rbac.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get('/mentees', (0, rbac_middleware_1.authorizeRoles)(['MENTOR', 'ADMIN']), mentorship_controller_1.getMentees);
+router.post('/interventions', (0, rbac_middleware_1.authorizeRoles)(['MENTOR', 'ADMIN']), mentorship_controller_1.logIntervention);
+router.put('/interventions/:interventionId', (0, rbac_middleware_1.authorizeRoles)(['MENTOR', 'ADMIN']), mentorship_controller_1.updateInterventionStatus);
+exports.default = router;

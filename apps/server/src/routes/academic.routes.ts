@@ -1,10 +1,26 @@
 import { Router } from 'express';
-import { getDepartments, getCourses } from '../controllers/academic.controller';
+import {
+  getDepartments,
+  createDepartment,
+  getCourses,
+  getCourseById,
+  createCourse,
+  getMyCourses,
+} from '../controllers/academic.controller';
 import { authenticate } from '../middlewares/auth.middleware';
+import { authorizeRoles } from '../middlewares/rbac.middleware';
 
 const router = Router();
 
-router.get('/departments', authenticate, getDepartments);
-router.get('/courses', authenticate, getCourses);
+router.use(authenticate);
+
+router.get('/departments', getDepartments);
+router.post('/departments', authorizeRoles(['ADMIN']), createDepartment);
+
+router.get('/courses', getCourses);
+router.get('/courses/:courseId', getCourseById);
+router.post('/courses', authorizeRoles(['ADMIN']), createCourse);
+
+router.get('/my-courses', getMyCourses);
 
 export default router;

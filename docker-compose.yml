@@ -1,0 +1,77 @@
+version: '3.9'
+
+services:
+  # ── MongoDB ────────────────────────────────────────────────────────────────
+  edusphere-mongo:
+    image: mongo:7
+    container_name: edusphere-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: edusphere_ai
+    networks:
+      - edusphere-net
+
+  # ── Node.js Express API ────────────────────────────────────────────────────
+  edusphere-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: edusphere-server
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://edusphere-mongo:27017/edusphere_ai
+      JWT_SECRET: ${JWT_SECRET:-edusphere_super_secret_key_2026_btech}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-edusphere_refresh_key_2026}
+      JWT_EXPIRES_IN: 24h
+      AI_SERVICE_URL: http://edusphere-ai:8000
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your_gemini_api_key_here}
+    depends_on:
+      - edusphere-mongo
+    networks:
+      - edusphere-net
+
+  # ── Python FastAPI AI/ML Service ───────────────────────────────────────────
+  edusphere-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    container_name: edusphere-ai
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your_gemini_api_key_here}
+    networks:
+      - edusphere-net
+
+  # ── React Web Frontend (nginx) ─────────────────────────────────────────────
+  edusphere-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_URL: /api/v1
+    container_name: edusphere-web
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - edusphere-server
+    networks:
+      - edusphere-net
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  edusphere-net:
+    driver: bridge

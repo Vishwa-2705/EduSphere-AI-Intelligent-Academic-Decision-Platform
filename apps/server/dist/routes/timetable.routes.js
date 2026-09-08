@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const timetable_controller_1 = require("../controllers/timetable.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const rbac_middleware_1 = require("../middlewares/rbac.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get('/student', timetable_controller_1.getStudentTimetable);
+router.get('/faculty', timetable_controller_1.getFacultyTimetable);
+router.post('/slots', (0, rbac_middleware_1.authorizeRoles)(['ADMIN']), timetable_controller_1.createTimetableSlot);
+router.post('/optimize', (0, rbac_middleware_1.authorizeRoles)(['ADMIN']), timetable_controller_1.runOptimizationSolver);
+exports.default = router;
