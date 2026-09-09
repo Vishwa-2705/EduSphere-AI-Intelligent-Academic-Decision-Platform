@@ -813,6 +813,7 @@ export interface StudentLeaveRequest {
   hasDocument: boolean;
   submittedAt: string;
   status: LeaveStatus;
+  mentorStatus?: LeaveStatus;
   rejectionReason?: string;
   actionAt?: string;
   // Warden specific fields for residential students
@@ -838,12 +839,13 @@ export const initialLeaveRequests: StudentLeaveRequest[] = [
     numberOfDays: 3,
     reason: 'Severe viral fever and physician-prescribed rest. Medical certificate attached.',
     hasDocument: true,
-    submittedAt: '2026-09-04',
+    submittedAt: '2026-09-03',
     status: 'Pending',
+    mentorStatus: 'Pending',
     isHostelLeave: true,
     hostelBlock: 'Block 4 - Aryabhata',
     hostelRoom: '212',
-    wardenStatus: 'Pending',
+    wardenStatus: 'Approved',
   },
   // Sameer Sen -> CSE Mentor (Mr. Arun Kumar)
   {
@@ -884,6 +886,7 @@ export const initialLeaveRequests: StudentLeaveRequest[] = [
     hasDocument: false,
     submittedAt: '2026-09-04',
     status: 'Pending',
+    mentorStatus: 'Pending',
   },
   // Vikram S -> IT Mentor (Dr. Rohit Sharma)
   {

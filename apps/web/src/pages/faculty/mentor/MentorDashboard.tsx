@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useFaculty } from '../../../contexts/FacultyContext';
 import { mentorStudents, examSchedule } from '../../../data/facultyData';
 import {
@@ -9,8 +10,11 @@ import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 
 export const MentorDashboard: React.FC = () => {
-  const { leaveRequests, sendExamReminder, examSchedule: exams } = useFaculty();
+  const { user, profile } = useAuth();
+  const { leaveRequests, sendExamReminder, examSchedule: exams, facultyDepartmentName } = useFaculty();
 
+  const facultyDisplayName = profile?.fullName || user?.email || 'Faculty Mentor';
+  const departmentLabel = facultyDepartmentName || 'Department of Information Technology';
   const myStudents = mentorStudents; // assigned students for this mentor
   const pendingLeaves = leaveRequests.filter(lr => lr.status === 'Pending');
   const atRiskCount = myStudents.filter(s => s.academicStatus === 'At Risk' || s.attendance < 75).length;
@@ -32,13 +36,13 @@ export const MentorDashboard: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700 mb-2">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Mentor Advisory Desk • Department of Information Technology</span>
+              <span>Mentor Advisory Desk • {departmentLabel}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Welcome, Dr. Priya Kumar 👋
+              Welcome, {facultyDisplayName} 👋
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Designated Mentor for <strong className="text-slate-800">B.Tech IT (Batch 2022–2026, Semester V, Sec A & B)</strong>
+              Designated Mentor for <strong className="text-slate-800">B.Tech {departmentLabel.replace('Department of ', '')} (Batch 2022–2026, Semester V, Sec A & B)</strong>
             </p>
           </div>
 

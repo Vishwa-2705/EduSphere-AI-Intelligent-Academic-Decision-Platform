@@ -24,6 +24,7 @@ import {
   initialDepartmentSchedules,
   initialFacultySchedules,
 } from '../data/facultyData';
+import { getStudentStorageKey, normalizeStudentLeaveApplications, getDefaultStudentLeaveApplications } from '../data/studentData';
 
 interface FacultyContextType {
   // Current user role & department
@@ -178,6 +179,27 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.setItem('edusphere_leaves', JSON.stringify(leaveRequests));
   }, [leaveRequests]);
 
+  // Listen to external updates to shared leave requests (e.g. student submissions)
+  useEffect(() => {
+    const handler = () => {
+      try {
+        const saved = localStorage.getItem('edusphere_leaves');
+        if (saved) setLeaveRequests(JSON.parse(saved));
+      } catch (e) {
+        // ignore parse errors
+      }
+    };
+
+    window.addEventListener('edusphere_leaves_updated', handler as EventListener);
+    // Also respond to storage events across tabs
+    window.addEventListener('storage', handler as EventListener);
+
+    return () => {
+      window.removeEventListener('edusphere_leaves_updated', handler as EventListener);
+      window.removeEventListener('storage', handler as EventListener);
+    };
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('edusphere_faculty_leaves', JSON.stringify(facultyLeaveRequests));
   }, [facultyLeaveRequests]);
@@ -309,18 +331,27 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   // Student Leave actions
+  const resolveOverallLeaveStatus = useCallback((mentorStatus?: LeaveStatus, wardenStatus?: LeaveStatus) => {
+    if (mentorStatus === 'Rejected' || wardenStatus === 'Rejected') return 'Rejected';
+    if (mentorStatus === 'Approved' && wardenStatus === 'Approved') return 'Approved';
+    return 'Pending';
+  }, []);
+
   const updateLeaveStatus = useCallback((id: string, status: LeaveStatus, reason?: string) => {
     setLeaveRequests(prev =>
-      prev.map(lr =>
-        lr.id === id
-          ? {
-              ...lr,
-              status,
-              actionAt: new Date().toISOString().split('T')[0],
-              ...(reason ? { rejectionReason: reason } : {}),
-            }
-          : lr
-      )
+      prev.map(lr => {
+        if (lr.id !== id) return lr;
+
+        const nextMentorStatus = status;
+        const nextOverallStatus = resolveOverallLeaveStatus(nextMentorStatus, lr.wardenStatus);
+
+        return {
+          ...lr,
+          status: nextOverallStatus,
+          actionAt: new Date().toISOString().split('T')[0],
+          ...(reason ? { rejectionReason: reason } : {}),
+        };
+      })
     );
 
     // Dispatch notification to student
@@ -341,7 +372,47 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       };
       setNotifications(prev => [newNotif, ...prev]);
     }
-  }, [leaveRequests]);
+
+    // Keep per-student leave_applications (student-local store) in sync so student UI shows updated status
+    try {
+      const target = leaveRequests.find(lr => lr.id === id);
+      if (target) {
+        const studentItem = studentList.find(s => s.id === target.studentId || s.regNo === target.regNo);
+        const studentEmail = studentItem?.email || '';
+        if (studentEmail) {
+          const storageKey = getStudentStorageKey(studentEmail, 'leave_applications');
+          const saved = localStorage.getItem(storageKey);
+          const existing = saved ? normalizeStudentLeaveApplications(JSON.parse(saved), studentEmail) : getDefaultStudentLeaveApplications(studentEmail);
+
+          const isDayScholar = studentItem?.studentType === 'DAY_SCHOLAR';
+          const labels = isDayScholar ? ['Parent', 'Mentor'] : ['Parent', 'Warden', 'Mentor'];
+          const nextApprovals = labels.map((label) => {
+            if (label === 'Mentor') return { label, status: status === 'Approved' ? 'Approved' : status === 'Rejected' ? 'Declined' : 'Awaiting' };
+            if (label === 'Warden') return { label, status: (target.wardenStatus === 'Approved' ? 'Approved' : target.wardenStatus === 'Rejected' ? 'Declined' : 'Awaiting') as 'Approved' | 'Declined' | 'Awaiting' };
+            return { label, status: 'Awaiting' as const };
+          });
+
+          const appStatus = resolveOverallLeaveStatus(status, target.wardenStatus) === 'Approved' ? 'Approved' : resolveOverallLeaveStatus(status, target.wardenStatus) === 'Rejected' ? 'Declined' : 'Awaiting';
+          const appDate = (() => {
+            if (!target.fromDate) return new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            const [year, month, day] = target.fromDate.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          })();
+
+          const matchedIndex = existing.findIndex(app => app.requestId === target.id);
+          const updated = matchedIndex >= 0
+            ? existing.map((app, index) => index === matchedIndex
+                ? { ...app, date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals }
+                : app)
+            : [{ date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals, requestId: target.id }, ...existing];
+
+          localStorage.setItem(storageKey, JSON.stringify(updated));
+        }
+      }
+    } catch (e) {
+      // ignore storage sync errors
+    }
+  }, [leaveRequests, resolveOverallLeaveStatus]);
 
   // Faculty Leave actions
   const applyFacultyLeave = useCallback((leave: Omit<FacultyLeaveRequest, 'id' | 'status' | 'submittedDate'>) => {
@@ -406,9 +477,55 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Warden leave approval
   const updateWardenLeaveStatus = useCallback((id: string, status: LeaveStatus) => {
     setLeaveRequests(prev =>
-      prev.map(lr => (lr.id === id ? { ...lr, wardenStatus: status } : lr))
+      prev.map(lr => {
+        if (lr.id !== id) return lr;
+
+        const nextWardenStatus = status;
+        const nextOverallStatus = resolveOverallLeaveStatus(lr.status, nextWardenStatus);
+
+        return { ...lr, wardenStatus: nextWardenStatus, status: nextOverallStatus };
+      })
     );
-  }, []);
+    // Sync to student local leave applications so student sees warden decision
+    try {
+      const target = leaveRequests.find(lr => lr.id === id);
+      if (target) {
+        const studentItem = studentList.find(s => s.id === target.studentId || s.regNo === target.regNo);
+        const studentEmail = studentItem?.email || '';
+        if (studentEmail) {
+          const storageKey = getStudentStorageKey(studentEmail, 'leave_applications');
+          const saved = localStorage.getItem(storageKey);
+          const existing = saved ? normalizeStudentLeaveApplications(JSON.parse(saved), studentEmail) : getDefaultStudentLeaveApplications(studentEmail);
+
+          const isDayScholar = studentItem?.studentType === 'DAY_SCHOLAR';
+          const labels = isDayScholar ? ['Parent', 'Mentor'] : ['Parent', 'Warden', 'Mentor'];
+          const nextApprovals = labels.map((label) => {
+            if (label === 'Warden') return { label, status: status === 'Approved' ? 'Approved' : 'Declined' };
+            if (label === 'Mentor') return { label, status: (target.status === 'Approved' ? 'Approved' : target.status === 'Rejected' ? 'Declined' : 'Awaiting') as 'Approved' | 'Declined' | 'Awaiting' };
+            return { label, status: 'Awaiting' as const };
+          });
+
+          const appStatus = resolveOverallLeaveStatus(target.status, status) === 'Approved' ? 'Approved' : resolveOverallLeaveStatus(target.status, status) === 'Rejected' ? 'Declined' : 'Awaiting';
+          const appDate = (() => {
+            if (!target.fromDate) return new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            const [year, month, day] = target.fromDate.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          })();
+
+          const matchedIndex = existing.findIndex(app => app.requestId === target.id);
+          const updated = matchedIndex >= 0
+            ? existing.map((app, index) => index === matchedIndex
+                ? { ...app, date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals }
+                : app)
+            : [{ date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals, requestId: target.id }, ...existing];
+
+          localStorage.setItem(storageKey, JSON.stringify(updated));
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [leaveRequests, resolveOverallLeaveStatus]);
 
   // Exam reminder
   const sendExamReminder = useCallback((examId: string) => {

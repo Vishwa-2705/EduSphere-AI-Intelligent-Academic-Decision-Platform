@@ -108,7 +108,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             { name: 'Department Reports', href: '/faculty/hod/reports', icon: BarChart3 },
             { name: 'Apply Leave', href: '/faculty/hod/leave', icon: FileSpreadsheet },
             { name: 'Notifications', href: '/faculty/hod/notifications', icon: Bell },
-            { name: 'Profile', href: '/faculty/profile', icon: User },
           ];
         }
 
@@ -120,7 +119,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             { name: 'Outing & Leaves', href: '/faculty/warden/leave', icon: FileSpreadsheet },
             { name: 'Hostel Blocks', href: '/faculty/warden/rooms', icon: Building2 },
             { name: 'Warden Alerts', href: '/faculty/warden/notifications', icon: Bell },
-            { name: 'Profile', href: '/faculty/profile', icon: User },
           ];
         }
 
@@ -130,11 +128,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             { name: 'Mentor Dashboard', href: '/faculty/mentor', icon: LayoutDashboard },
             { name: 'My Mentees', href: '/faculty/mentor/students', icon: Users },
             { name: 'Leave Requests', href: '/faculty/mentor/leave', icon: FileSpreadsheet, badge: pendingLeaveCount > 0 ? `${pendingLeaveCount} Due` : undefined },
-            { name: 'Attendance & Risk', href: '/faculty/mentor/students', icon: CalendarCheck },
-            { name: 'Academic Performance', href: '/faculty/mentor/students', icon: TrendingUp },
+            
             { name: 'Exam Reminders', href: '/faculty/mentor/exams', icon: Award },
             { name: 'Notifications', href: '/faculty/mentor/notifications', icon: Bell },
-            { name: 'Profile', href: '/faculty/profile', icon: User },
           ];
         }
 
@@ -146,18 +142,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           { name: 'Material Status', href: '/faculty/dept/status', icon: Clock, badge: rejectedMaterialCount > 0 ? `${rejectedMaterialCount} Alert` : undefined },
           { name: 'Apply Leave', href: '/faculty/dept/leave', icon: FileText },
           { name: 'Faculty Notifications', href: '/faculty/dept/notifications', icon: Bell },
-          { name: 'Profile', href: '/faculty/profile', icon: User },
         ];
       case 'MENTOR':
         return [
           { name: 'Mentor Dashboard', href: '/faculty/mentor', icon: LayoutDashboard },
           { name: 'My Mentees', href: '/faculty/mentor/students', icon: Users },
           { name: 'Leave Requests', href: '/faculty/mentor/leave', icon: FileSpreadsheet, badge: pendingLeaveCount > 0 ? `${pendingLeaveCount} Due` : undefined },
-          { name: 'Attendance & Risk', href: '/faculty/mentor/students', icon: CalendarCheck },
-          { name: 'Academic Performance', href: '/faculty/mentor/students', icon: TrendingUp },
+          
           { name: 'Exam Reminders', href: '/faculty/mentor/exams', icon: Award },
           { name: 'Notifications', href: '/faculty/mentor/notifications', icon: Bell },
-          { name: 'Profile', href: '/faculty/profile', icon: User },
         ];
       case 'ADMIN':
         return [

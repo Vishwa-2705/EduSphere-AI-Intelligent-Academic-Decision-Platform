@@ -22,7 +22,7 @@ import {
   Calendar,
   Layers,
 } from 'lucide-react';
-import clsx from 'clsx';
+
 
 export const StudentDashboard: React.FC = () => {
   const { user, profile } = useAuth();
@@ -182,10 +182,8 @@ export const StudentDashboard: React.FC = () => {
     pendingFeeDue: 0,
   };
 
-  const enrollments = data?.enrollments || [];
   const riskScore = data?.riskScore;
   const mentor = data?.mentor;
-  const todaySchedule = data?.todaySchedule || [];
   const isFeePaid = Number(feeSummary.balanceAmount || student.balanceFee) === 0 || feeSummary.status === 'PAID';
 
   const upcomingExams = [
@@ -270,117 +268,8 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Main Content Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Timetable, Attendance & Exams */}
+        {/* Left Column: Exams & other items (timetable and attendance removed) */}
         <div className="space-y-6 lg:col-span-8">
-          {/* Today's Timetable */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Today's Class Timetable</h3>
-                <p className="text-xs text-slate-500">Live lecture timeline and classroom allocations</p>
-              </div>
-              <span className="badge-indigo">Monday Schedule</span>
-            </div>
-
-            <div className="p-6 divide-y divide-slate-100">
-              {todaySchedule.map((slot: any, idx: number) => (
-                <div key={idx} className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3.5">
-                    <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                      0{idx + 1}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-indigo-600 font-mono font-bold text-xs">
-                          {slot.courseCode}
-                        </span>
-                        <h4 className="text-sm font-bold text-slate-900">{slot.courseName}</h4>
-                      </div>
-                      <div className="mt-1 flex items-center gap-4 text-xs text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-indigo-500" />
-                          {slot.time}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5 text-indigo-500" />
-                          {slot.room}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-left sm:text-right">
-                    <span className="badge-emerald">{slot.status}</span>
-                    <p className="text-xs text-slate-500 mt-1">{slot.facultyName}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Subject-Wise Attendance Overview */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Attendance Overview</h3>
-                <p className="text-xs text-slate-500">Subject-wise class attendance & exam clearance tracking</p>
-              </div>
-              <span className="badge-slate">{enrollments.length} Active Courses</span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="edusphere-table">
-                <thead>
-                  <tr>
-                    <th>Course Code & Title</th>
-                    <th>Credits</th>
-                    <th>Classes Attended</th>
-                    <th>Attendance %</th>
-                    <th>Exam Eligibility</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {enrollments.map((en: any) => {
-                    const att = en.attendancePercentage || 85;
-                    const isEligible = att >= 75;
-                    return (
-                      <tr key={en._id}>
-                        <td>
-                          <span className="font-mono font-bold text-indigo-600 mr-2">{en.course?.code}</span>
-                          <span className="font-bold text-slate-900">{en.course?.title}</span>
-                          <p className="text-xs text-slate-400 mt-0.5">Faculty: {en.course?.assignedFaculty?.email || 'Dr. Rajesh Sharma'}</p>
-                        </td>
-                        <td className="font-bold text-slate-700">{en.course?.credits || 4}</td>
-                        <td className="font-mono text-slate-600">
-                          {en.attendedClasses} / {en.totalClasses}
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <div className="w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
-                              <div
-                                className={clsx(
-                                  'h-2 rounded-full',
-                                  att >= 85 ? 'bg-emerald-500' : att >= 75 ? 'bg-amber-500' : 'bg-rose-500'
-                                )}
-                                style={{ width: `${att}%` }}
-                              />
-                            </div>
-                            <span className="font-bold text-xs">{att}%</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={isEligible ? 'badge-emerald' : 'badge-rose'}>
-                            {isEligible ? 'Permitted' : 'Shortage'}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           {/* Upcoming Examinations */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">

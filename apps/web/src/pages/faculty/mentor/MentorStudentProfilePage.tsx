@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mentorStudents, examSchedule } from '../../../data/facultyData';
+import { mentorStudents, examSchedule, StudentRecordItem } from '../../../data/facultyData';
 import { useFaculty } from '../../../contexts/FacultyContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import {
   User, ArrowLeft, Award, CalendarCheck, BookOpen, AlertTriangle,
   FileSpreadsheet, CheckCircle2, XCircle, Clock, Phone, Mail, MapPin,
@@ -10,11 +11,14 @@ import {
 import clsx from 'clsx';
 
 export const MentorStudentProfilePage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { studentId } = useParams();
+  const { user, profile } = useAuth();
+  const mentorName = profile?.fullName || user?.email || 'Faculty Mentor';
   const { leaveRequests } = useFaculty();
+  const [student, setStudent] = useState<StudentRecordItem>(
+    mentorStudents.find(s => s.id === studentId) || mentorStudents[0]
+  );
 
-  // Find student or fallback to first
-  const student = mentorStudents.find(s => s.id === id) || mentorStudents[0];
   const studentLeaves = leaveRequests.filter(lr => lr.studentId === student.id);
 
   return (
@@ -38,7 +42,7 @@ export const MentorStudentProfilePage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-extrabold text-2xl flex items-center justify-center flex-shrink-0 shadow-md">
-              {student.name.split(' ').map(n => n[0]).join('')}
+              {student.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
 
             <div>
@@ -92,13 +96,13 @@ export const MentorStudentProfilePage: React.FC = () => {
           <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
             <p className="text-[11px] text-slate-400 font-bold uppercase">Active Leaves</p>
             <p className="text-xl font-extrabold text-amber-600 mt-0.5 font-mono">
-              {studentLeaves.filter(l => l.status === 'Pending').length} Pending
+              {studentLeaves.filter((l: any) => l.status === 'Pending').length} Pending
             </p>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
             <p className="text-[11px] text-slate-400 font-bold uppercase">Assignments</p>
             <p className="text-xl font-extrabold text-indigo-700 mt-0.5 font-mono">
-              {student.assignments.filter(a => a.submitted).length} / {student.assignments.length} Done
+              {student.assignments.filter((a: { submitted: boolean }) => a.submitted).length} / {student.assignments.length} Done
             </p>
           </div>
         </div>
@@ -119,7 +123,7 @@ export const MentorStudentProfilePage: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-4">
-              {student.subjectMarks.map((sm, idx) => {
+              {student.subjectMarks.map((sm: { subject: string; internal: number; maxInternal: number }, idx: number) => {
                 const percentage = Math.round((sm.internal / sm.maxInternal) * 100);
                 return (
                   <div key={idx} className="space-y-1.5">
@@ -154,7 +158,7 @@ export const MentorStudentProfilePage: React.FC = () => {
             </div>
 
             <div className="divide-y divide-slate-100 p-2">
-              {student.assignments.map((asgn, i) => (
+              {student.assignments.map((asgn: { name: string; submitted: boolean }, i: number) => (
                 <div key={i} className="flex items-center justify-between p-3 text-xs">
                   <span className="font-bold text-slate-800">{asgn.name}</span>
                   {asgn.submitted ? (
@@ -221,15 +225,15 @@ export const MentorStudentProfilePage: React.FC = () => {
             <div className="text-xs space-y-2 text-slate-600">
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-400">Mentor Name</p>
-                <p className="font-bold text-slate-900 text-sm">Dr. Priya Kumar</p>
+                <p className="font-bold text-slate-900 text-sm">{mentorName}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-400">Designation & Department</p>
-                <p className="font-semibold text-slate-800">Professor & HOD, Information Technology</p>
+                <p className="font-semibold text-slate-800">{profile?.designation || 'Professor & HOD'}, {student.departmentName}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-400">Contact Channels</p>
-                <p className="font-medium text-slate-700">faculty@edusphere.ai • +91 98400 11234</p>
+                <p className="font-medium text-slate-700">{user?.email || 'faculty@edusphere.ai'} • +91 98400 11234</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-400">Mentorship Inception</p>

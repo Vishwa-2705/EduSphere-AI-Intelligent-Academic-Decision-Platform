@@ -81,14 +81,14 @@ export const studentRecords: StudentRecord[] = [
     cgpa: 8.9,
     sgpa: 8.8,
     gender: 'Male',
-    mentorName: 'Prof. Anita Verma',
+    mentorName: 'Mr. Arun Kumar',
     mentorDepartment: 'Computer Science & Engineering',
-    mentorDesignation: 'Senior Faculty Mentor & Counselor',
-    mentorEmail: 'anita.verma@edusphere.ai',
-    mentorContact: '+91 97654 32109',
+    mentorDesignation: 'Associate Professor & Faculty Mentor',
+    mentorEmail: 'arun.kumar@edusphere.ai',
+    mentorContact: '+91 98400 22345',
     mentorHours: 'Tue & Thu • 4:00 PM - 5:30 PM',
     mentorNextMeeting: 'Thursday, 05 Sep 2026 • 4:15 PM',
-    mentorRecentInfo: 'Reviewed the student’s project roadmap, internship readiness, and exam preparation strategy for the upcoming semester cycle.',
+    mentorRecentInfo: 'Assigned mentor Arun Kumar for academic guidance and project supervision.',
     hostelBlock: 'Block 4 - Aryabhata',
     hostelRoom: '212',
     hostelBed: 'Bed-A (Window Side)',
@@ -613,6 +613,7 @@ export type LeaveApplication = {
   duration: string;
   status: string;
   approvals: { label: string; status: 'Approved' | 'Declined' | 'Awaiting' }[];
+  requestId?: string;
 };
 
 export const getDefaultStudentLeaveApplications = (email?: string): LeaveApplication[] => {
@@ -636,5 +637,6 @@ export const normalizeStudentLeaveApplications = (applications: Partial<LeaveApp
     ...application,
     status: application.status === 'Pending' ? 'Awaiting' : application.status || 'Awaiting',
     approvals: application.approvals?.length ? application.approvals : labels.map((label) => ({ label, status: 'Awaiting' as const })),
+    requestId: application.requestId,
   }));
 };

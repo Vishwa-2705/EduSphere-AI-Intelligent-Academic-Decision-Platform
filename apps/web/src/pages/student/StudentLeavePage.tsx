@@ -2,11 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { CalendarDays, Clock3, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getDefaultStudentLeaveApplications, getStudentRecord, getStudentStorageKey, LeaveApplication, normalizeStudentLeaveApplications } from '../../data/studentData';
+import { studentList } from '../../data/facultyData';
+import { StudentLeaveRequest } from '../../data/facultyData';
 
 export const StudentLeavePage: React.FC = () => {
   const { user } = useAuth();
   const student = getStudentRecord(user?.email);
   const [form, setForm] = useState({ type: 'Medical Leave', from: '', to: '', reason: '' });
+
+  const formatLeaveDate = (value: string) => {
+    if (!value) return new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const [year, month, day] = value.split('-').map(Number);
+    if (!year || !month || !day) return new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
   const [applications, setApplications] = useState<LeaveApplication[]>(() => {
     const storageKey = getStudentStorageKey(user?.email, 'leave_applications');
     const saved = localStorage.getItem(storageKey);
@@ -44,17 +54,62 @@ export const StudentLeavePage: React.FC = () => {
       return;
     }
     setError('');
+    const requestId = `lr-${Date.now()}`;
     const approvalLabels = student.studentType === 'DAY_SCHOLAR' ? ['Parent', 'Mentor'] : ['Parent', 'Warden', 'Mentor'];
     const nextApplication: LeaveApplication = {
-      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      date: formatLeaveDate(form.from),
       type: form.type,
       duration: `${Math.max(1, Math.ceil((new Date(form.to).getTime() - new Date(form.from).getTime()) / (1000 * 60 * 60 * 24)) + 1)} Days`,
       status: 'Awaiting',
       approvals: approvalLabels.map((label) => ({ label, status: 'Awaiting' })),
+      requestId,
     };
     const nextApplications = [nextApplication, ...applications];
     setApplications(nextApplications);
     localStorage.setItem(getStudentStorageKey(user?.email, 'leave_applications'), JSON.stringify(nextApplications));
+
+    const fromVal = form.from;
+    const toVal = form.to;
+
+    // Also publish to shared faculty leave store so mentors/wardens see this request
+    try {
+      const matched = studentList.find(s => s.email.toLowerCase() === (user?.email || '').toLowerCase() || s.regNo === student.registerNumber);
+      const departmentCode = matched?.departmentCode || matched?.departmentName?.slice(0, 3).toUpperCase() || 'CSE';
+      const isHostelLeave = Boolean(student.hostelBlock && student.hostelBlock.trim());
+      const days = Math.max(1, Math.ceil((new Date(toVal).getTime() - new Date(fromVal).getTime()) / (1000 * 60 * 60 * 24)) + 1);
+      const newLeave: StudentLeaveRequest = {
+        id: requestId,
+        studentId: matched?.id || `std-${(student.registerNumber || '').toLowerCase()}`,
+        studentName: student.name,
+        regNo: student.registerNumber,
+        departmentCode: departmentCode,
+        mentorEmail: (matched?.mentorEmail) || (student as any).mentorEmail || '',
+        mentorName: (matched?.mentorName) || (student as any).mentorName || '',
+        leaveType: form.type,
+        fromDate: fromVal,
+        toDate: toVal,
+        numberOfDays: days,
+        reason: form.reason,
+        hasDocument: false,
+        submittedAt: new Date().toISOString().split('T')[0],
+        status: 'Pending',
+        isHostelLeave: isHostelLeave,
+        hostelBlock: isHostelLeave ? student.hostelBlock : undefined,
+        hostelRoom: isHostelLeave ? student.hostelRoom : undefined,
+        wardenStatus: isHostelLeave ? 'Pending' : undefined,
+      };
+
+      const sharedKey = 'edusphere_leaves';
+      const saved = localStorage.getItem(sharedKey);
+      const arr = saved ? JSON.parse(saved) : [];
+      arr.unshift(newLeave);
+      localStorage.setItem(sharedKey, JSON.stringify(arr));
+      // notify listeners (FacultyContext) to reload
+      window.dispatchEvent(new Event('edusphere_leaves_updated'));
+    } catch (e) {
+      // ignore failures here to avoid breaking student flow
+    }
+
     setForm({ type: 'Medical Leave', from: '', to: '', reason: '' });
   };
 

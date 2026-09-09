@@ -1,4 +1,5 @@
 ﻿import React, { useState } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useFaculty } from '../../../contexts/FacultyContext';
 import { facultyMembers, subjects } from '../../../data/facultyData';
 import {
@@ -9,9 +10,10 @@ import {
 import clsx from 'clsx';
 
 export const HODDashboard: React.FC = () => {
+  const { user, profile } = useAuth();
   const {
     materials, notifications, facultyDepartmentCode,
-    myDepartmentFacultyLeaves, myDepartmentStudentSchedules,
+    facultyDepartmentName, myDepartmentFacultyLeaves, myDepartmentStudentSchedules,
     myDepartmentFacultySchedules, updateFacultyLeaveStatus, myDepartmentExams,
   } = useFaculty();
 
@@ -24,7 +26,9 @@ export const HODDashboard: React.FC = () => {
   const [facultyScheduleFilter, setFacultyScheduleFilter] = useState('All');
   const [facultyScheduleDayFilter, setFacultyScheduleDayFilter] = useState('All');
 
+  const facultyDisplayName = profile?.fullName || user?.email || 'Department HOD';
   const deptCode = facultyDepartmentCode;
+  const deptName = facultyDepartmentName || 'Computer Science & Engineering';
   const deptMaterials = materials.filter(m => m.departmentCode === deptCode);
   const pending = deptMaterials.filter(m => ['Submitted', 'Under Verification', 'Resubmitted'].includes(m.status)).length;
   const approved = deptMaterials.filter(m => m.status === 'Approved').length;
@@ -94,13 +98,13 @@ export const HODDashboard: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-xs font-bold text-violet-700 mb-2">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>HOD Console - Computer Science and Engineering</span>
+              <span>HOD Console - {deptName}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Welcome, Dr. Priya Kumar
+              Welcome, {facultyDisplayName}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Head of Department &bull; <strong className="text-slate-800">Department of Computer Science and Engineering (CSE)</strong> &bull; Academic Year 2025-2026 &bull; Semester VI
+              Head of Department &bull; <strong className="text-slate-800">{deptName} ({deptCode})</strong> &bull; Academic Year 2025-2026 &bull; Semester VI
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -137,7 +141,7 @@ export const HODDashboard: React.FC = () => {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900">Department Overview</h3>
-            <p className="text-xs text-slate-500">CSE - Faculty and Materials Summary</p>
+            <p className="text-xs text-slate-500">{deptCode} - Faculty and Materials Summary</p>
           </div>
           <a href="/faculty/hod/faculty" className="text-xs font-bold text-violet-700 hover:text-violet-900 flex items-center gap-1">
             View All Faculty <ChevronRight className="h-3.5 w-3.5" />
@@ -162,7 +166,7 @@ export const HODDashboard: React.FC = () => {
             ))}
           </div>
           <div className="p-5">
-            <p className="text-xs text-slate-500 font-semibold mb-3 uppercase tracking-wider">CSE Faculty</p>
+            <p className="text-xs text-slate-500 font-semibold mb-3 uppercase tracking-wider">{deptCode} Faculty</p>
             {facultyMembers.filter(f => f.departmentCode === deptCode).slice(0, 4).map(f => (
               <div key={f.id} className="flex items-center gap-2.5 mb-3">
                 <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-xs font-extrabold flex items-center justify-center flex-shrink-0">
@@ -200,7 +204,7 @@ export const HODDashboard: React.FC = () => {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900">Faculty Leave Requests</h3>
-            <p className="text-xs text-slate-500">CSE Department Faculty leave applications requiring your approval</p>
+            <p className="text-xs text-slate-500">{deptCode} Department Faculty leave applications requiring your approval</p>
           </div>
           <div className="flex items-center gap-2">
             {pendingLeaveCount > 0 && (

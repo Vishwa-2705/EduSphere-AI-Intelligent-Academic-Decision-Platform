@@ -12,6 +12,7 @@ export const DeptFacultyLeavePage: React.FC = () => {
   const { applyFacultyLeave, myOwnFacultyLeaves, facultyDepartmentCode, facultyDepartmentName } = useFaculty();
   const facultyInfo = user?.email ? getFacultyByEmail(user.email) : undefined;
   const facultyName = facultyInfo?.name || profile?.fullName || 'Faculty Member';
+  const hodName = facultyDepartmentCode === 'IT' ? 'Dr. Rajesh Venkat' : facultyDepartmentCode === 'CSE' ? 'Dr. Priya Kumar' : 'Department HOD';
 
   const [form, setForm] = useState({
     leaveType: 'Casual Leave' as typeof LEAVE_TYPES[number],
@@ -84,7 +85,7 @@ export const DeptFacultyLeavePage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900">Apply for Leave</h1>
-            <p className="text-sm text-slate-500">{facultyName} - {facultyDepartmentCode} Dept. | Leave requests are routed to HOD Dr. Priya Kumar</p>
+            <p className="text-sm text-slate-500">{facultyName} - {facultyDepartmentCode} Dept. | Leave requests are routed to HOD {hodName}</p>
           </div>
         </div>
       </div>
@@ -94,7 +95,7 @@ export const DeptFacultyLeavePage: React.FC = () => {
         {submitted && (
           <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
             <CheckCircle2 className="h-4 w-4" />
-            Leave application submitted successfully! Routed to HOD Dr. Priya Kumar for approval.
+            Leave application submitted successfully! Routed to HOD {hodName} for approval.
           </div>
         )}
         {error && (

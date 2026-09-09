@@ -20,5 +20,8 @@
     "academic-erp"
   ],
   "author": "EduSphere AI Team",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "lucide-react": "^1.42.0"
+  }
 }

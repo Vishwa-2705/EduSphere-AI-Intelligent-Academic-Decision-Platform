@@ -88,21 +88,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getSavedPassword = (email: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     const store = getPasswordStore();
     return localStorage.getItem(`edusphere_password_${normalizedEmail}`) || store[normalizedEmail] || null;
   };
 
   const savePasswordForUser = (email: string, password: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     const passwordStore = getPasswordStore();
     passwordStore[normalizedEmail] = password;
     setPasswordStore(passwordStore);
     localStorage.setItem(`edusphere_password_${normalizedEmail}`, password);
   };
 
+  const normalizeLoginEmail = (email: string) => email.trim().toLowerCase().replace('@student.edusphere.ai', '@edusphere.ai');
+
   const getDefaultPasswordForEmail = (email: string, selectedRole?: UserRole) => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     if (selectedRole === 'FACULTY' || selectedRole === 'MENTOR') {
       const facultyDefaults: Record<string, string> = {
         'faculty@edusphere.ai': 'Faculty@12345',
@@ -140,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isEmailAllowedForRole = (email: string, role: UserRole): boolean => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     if (role === 'ADMIN') {
       return normalizedEmail === 'admin@edusphere.ai' || normalizedEmail.includes('admin');
     }
@@ -155,6 +157,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'rohit.kumar@edusphere.ai',
         'rohit.sharma@edusphere.ai',
         'hod.it@edusphere.ai',
+        'nisha.reddy@edusphere.ai',
+        'vikram.sethi@edusphere.ai',
+        'v.sen@edusphere.ai',
         'warden@edusphere.ai',
         'mentor@edusphere.ai',
       ];
@@ -180,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isKnownUser = (email: string): boolean => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     const allUsers = [
       'admin@edusphere.ai',
       'faculty@edusphere.ai',
@@ -191,6 +196,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'rohit.kumar@edusphere.ai',
       'rohit.sharma@edusphere.ai',
       'hod.it@edusphere.ai',
+      'nisha.reddy@edusphere.ai',
+      'vikram.sethi@edusphere.ai',
+      'v.sen@edusphere.ai',
       'warden@edusphere.ai',
       'mentor@edusphere.ai',
       'nisha.kulkarni@edusphere.ai',
@@ -205,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getSystemRoleFromEmail = (email: string): UserRole | null => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     if (normalizedEmail === 'admin@edusphere.ai' || normalizedEmail.includes('admin')) {
       return 'ADMIN';
     }
@@ -217,6 +225,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'arun.kumar@edusphere.ai',
       'rohit.sharma@edusphere.ai',
       'hod.it@edusphere.ai',
+      'nisha.reddy@edusphere.ai',
+      'vikram.sethi@edusphere.ai',
+      'v.sen@edusphere.ai',
       'warden@edusphere.ai',
       'mentor@edusphere.ai',
     ];
@@ -250,7 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const buildDemoAuthResponse = (email: string, selectedRole?: UserRole): AuthResponse => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeLoginEmail(email);
     const resolvedRole = selectedRole || getRoleFromEmail(normalizedEmail);
 
     let fullName = 'Faculty User';
@@ -417,7 +428,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string, role?: UserRole) => {
     try {
       setIsLoading(true);
-      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedEmail = normalizeLoginEmail(email);
 
       // Check if user is known at all
       if (!isKnownUser(normalizedEmail)) {

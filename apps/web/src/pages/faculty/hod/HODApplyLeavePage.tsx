@@ -7,8 +7,9 @@ import clsx from 'clsx';
 const LEAVE_TYPES = ['Casual Leave', 'Medical Leave', 'On Duty (OD)', 'Earned Leave', 'Special Casual Leave'] as const;
 
 export const HODApplyLeavePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { applyFacultyLeave, myOwnFacultyLeaves, facultyDepartmentCode, facultyDepartmentName } = useFaculty();
+  const facultyDisplayName = profile?.fullName || user?.email || 'Department HOD';
 
   const [form, setForm] = useState({
     leaveType: 'Casual Leave' as typeof LEAVE_TYPES[number],
@@ -40,9 +41,9 @@ export const HODApplyLeavePage: React.FC = () => {
       return;
     }
     applyFacultyLeave({
-      facultyName: 'Dr. Priya Kumar',
-      facultyId: 'f-cse-hod',
-      facultyEmail: user?.email || 'priya.kumar@edusphere.ai',
+      facultyName: facultyDisplayName,
+      facultyId: user?.email || 'department-hod',
+      facultyEmail: user?.email || 'department.hod@edusphere.ai',
       departmentCode: facultyDepartmentCode,
       departmentName: facultyDepartmentName,
       leaveType: form.leaveType,
@@ -81,7 +82,7 @@ export const HODApplyLeavePage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900">Apply for Leave</h1>
-            <p className="text-sm text-slate-500">Dr. Priya Kumar - HOD, CSE | Requests are routed to Admin/Dean</p>
+            <p className="text-sm text-slate-500">{facultyDisplayName} - HOD, {facultyDepartmentCode} | Requests are routed to Admin/Dean</p>
           </div>
         </div>
       </div>
