@@ -1,3 +1,5 @@
+export type AccommodationStatus = 'Hosteller' | 'Day Scholar';
+
 export type StudentRecord = {
   email: string;
   name: string;
@@ -5,6 +7,7 @@ export type StudentRecord = {
   programme: string;
   department: string;
   semester: string;
+  accommodationStatus?: AccommodationStatus;
   academicYear: string;
   admissionYear: string;
   admissionType: string;
@@ -89,11 +92,12 @@ export const studentRecords: StudentRecord[] = [
     mentorHours: 'Tue & Thu • 4:00 PM - 5:30 PM',
     mentorNextMeeting: 'Thursday, 05 Sep 2026 • 4:15 PM',
     mentorRecentInfo: 'Assigned mentor Arun Kumar for academic guidance and project supervision.',
+    accommodationStatus: 'Hosteller',
     hostelBlock: 'Block 4 - Aryabhata',
     hostelRoom: '212',
     hostelBed: 'Bed-A (Window Side)',
     hostelFee: 28000,
-      busFee: 0,
+    busFee: 0,
     roommateName: 'Sameer Sen (22CS089)',
     roommateDepartment: 'Computer Science & Engineering',
     roommatePhone: '+91 94567 89012',
@@ -136,11 +140,12 @@ export const studentRecords: StudentRecord[] = [
     mentorHours: 'Mon & Wed • 3:30 PM - 5:00 PM',
     mentorNextMeeting: 'Wednesday, 04 Sep 2026 • 3:45 PM',
     mentorRecentInfo: 'Reviewed her DSP project roadmap, communication lab performance, and attendance recovery plan with a mentoring focus on stay-on-track progression.',
+    accommodationStatus: 'Hosteller',
     hostelBlock: 'Block 2 - Veda',
     hostelRoom: '108',
     hostelBed: 'Bed-B (East Side)',
     hostelFee: 24000,
-      busFee: 0,
+    busFee: 0,
     roommateName: 'Nandini Joshi (22EC099)',
     roommateDepartment: 'Electronics & Communication Engineering',
     roommatePhone: '+91 98456 44321',
@@ -183,11 +188,12 @@ export const studentRecords: StudentRecord[] = [
     mentorHours: 'Tue & Fri • 2:30 PM - 4:00 PM',
     mentorNextMeeting: 'Friday, 06 Sep 2026 • 2:45 PM',
     mentorRecentInfo: 'Discussed thermal engineering progress, CAD project milestones, and workshop practice with a focus on applied research and practical improvement.',
+    accommodationStatus: 'Hosteller',
     hostelBlock: 'Block 5 - Bhaskara',
     hostelRoom: '315',
     hostelBed: 'Bed-C (North Side)',
     hostelFee: 26000,
-      busFee: 0,
+    busFee: 0,
     roommateName: 'Karan Nair (22ME110)',
     roommateDepartment: 'Mechanical Engineering',
     roommatePhone: '+91 97665 11432',
@@ -234,7 +240,7 @@ export const studentRecords: StudentRecord[] = [
     hostelRoom: '',
     hostelBed: '',
     hostelFee: 0,
-      busFee: 6000,
+    busFee: 6000,
     roommateName: '',
     roommateDepartment: '',
     roommatePhone: '',
@@ -248,11 +254,69 @@ export const studentRecords: StudentRecord[] = [
     paymentMethod: 'ONLINE_UPI',
     studentType: 'DAY_SCHOLAR',
   },
+  {
+    email: 'rahul.s@edusphere.ai',
+    name: 'Rahul S',
+    registerNumber: '22IT101',
+    programme: 'B.Tech Information Technology',
+    department: 'Information Technology',
+    semester: 'VI',
+    academicYear: '2025 - 2026',
+    admissionYear: '2022',
+    admissionType: 'Merit Quota',
+    dateOfAdmission: '09 Aug 2022',
+    phone: '+91 91234 55667',
+    emailDisplay: 'rahul.s@edusphere.ai',
+    address: '12, Gandhi Nagar, Chennai, Tamil Nadu 600020',
+    dob: '14 Apr 2004',
+    guardian: 'Mr. Suresh S',
+    guardianPhone: '+91 94400 11112',
+    emergencyContact: 'Mrs. Meena S / +91 98765 43222',
+    academicStatus: 'Academic Improvement Track',
+    cgpa: 8.4,
+    sgpa: 8.5,
+    gender: 'Male',
+    mentorName: 'Dr. Rohit Sharma',
+    mentorDepartment: 'Information Technology',
+    mentorDesignation: 'Associate Professor & Faculty Mentor',
+    mentorEmail: 'rohit.sharma@edusphere.ai',
+    mentorContact: '+91 98765 43210',
+    mentorHours: 'Tue & Thu • 3:00 PM - 4:30 PM',
+    mentorNextMeeting: 'Thursday, 11 Sep 2026 • 3:15 PM',
+    mentorRecentInfo: 'Monitoring DBMS and networking performance with a structured remediation plan for improved exam readiness.',
+    accommodationStatus: 'Day Scholar',
+    hostelBlock: '',
+    hostelRoom: '',
+    hostelBed: '',
+    hostelFee: 0,
+    busFee: 5000,
+    roommateName: '',
+    roommateDepartment: '',
+    roommatePhone: '',
+    tuitionFee: 44000,
+    laboratoryFee: 11000,
+    libraryFee: 3200,
+    totalFee: 58200,
+    paidFee: 58200,
+    balanceFee: 0,
+    transactionId: 'TXN-EDU-314159',
+    paymentMethod: 'ONLINE_UPI',
+    studentType: 'DAY_SCHOLAR',
+  },
 ];
 
 export const getStudentRecord = (email?: string): StudentRecord => {
   const normalized = (email || 'aarav@edusphere.ai').trim().toLowerCase();
-  return studentRecords.find((student) => student.email === normalized) || studentRecords[0];
+  const normalizedAliasMap: Record<string, string> = {
+    'rahul@edusphere.ai': 'rahul.s@edusphere.ai',
+    'rahul.s@student.edusphere.ai': 'rahul.s@edusphere.ai',
+  };
+  const mappedEmail = normalizedAliasMap[normalized] || normalized;
+  const record = studentRecords.find((student) => student.email === mappedEmail) || studentRecords[0];
+  return {
+    ...record,
+    accommodationStatus: record.accommodationStatus || (record.studentType === 'DAY_SCHOLAR' ? 'Day Scholar' : 'Hosteller'),
+  };
 };
 
 export const getStudentStorageKey = (email: string | undefined, key: string) => {
@@ -586,8 +650,10 @@ export const getDepartmentAcademicProfile = (email?: string) => {
 export const getDefaultStudentNotifications = (email?: string): StudentNotification[] => {
   const record = getStudentRecord(email);
   const themeLabel = record.department.includes('Computer') ? 'Academic' : record.department.includes('Electronics') ? 'Electronics' : 'Mechanical';
+  const accommodationStatus = record.accommodationStatus || (record.studentType === 'DAY_SCHOLAR' ? 'Day Scholar' : 'Hosteller');
+  const isHosteller = accommodationStatus === 'Hosteller';
 
-  return [
+  const notifications: StudentNotification[] = [
     { category: 'Academic', title: `${themeLabel} assignment due for ${record.department.split('&')[0].trim()}`, message: `Your upcoming ${record.department} assignment is due this week. Review the course materials and submit it through the academic portal before the deadline.`, time: '2 hours ago', unread: true, expanded: false, icon: 'BookOpen' },
     { category: 'Examination', title: 'Internal assessment timetable published', message: 'The internal assessment timetable is now available. Check the Examinations section for your subject, venue, and reporting time.', time: 'Today, 9:30 AM', unread: true, expanded: false, icon: 'Clock3', details: [{ label: 'Subject', value: 'Data Structures' }, { label: 'Date', value: '12 Sep 2026' }, { label: 'Time', value: '09:00 AM' }, { label: 'Venue', value: 'Room 201' }] },
     { category: 'Fees', title: 'Fee reminder: hostel charges due', message: 'Please review your fee statement and settle any outstanding hostel charges before the payment deadline.', time: 'Yesterday', unread: false, expanded: false, icon: 'CreditCard' },
@@ -595,6 +661,13 @@ export const getDefaultStudentNotifications = (email?: string): StudentNotificat
     { category: 'Hostel', title: 'Hostel mess menu updated for this week', message: 'The weekly mess menu has been updated in the residential services portal.', time: '3 days ago', unread: false, expanded: false, icon: 'Megaphone' },
     { category: 'General', title: 'Campus health and safety advisory', message: 'Please follow current campus health and safety procedures and contact the administration desk if you need assistance.', time: '1 week ago', unread: false, expanded: false, icon: 'Bell' },
   ];
+
+  return notifications.filter((notification) => {
+    if (!isHosteller && (notification.category === 'Hostel' || (notification.category === 'Fees' && notification.title.toLowerCase().includes('hostel')))) {
+      return false;
+    }
+    return true;
+  });
 };
 
 export const normalizeStudentNotifications = (notifications: Partial<StudentNotification>[], email?: string): StudentNotification[] => {
@@ -616,27 +689,40 @@ export type LeaveApplication = {
   requestId?: string;
 };
 
-export const getDefaultStudentLeaveApplications = (email?: string): LeaveApplication[] => {
-  const isDayScholar = getStudentRecord(email).studentType === 'DAY_SCHOLAR';
-  const approvers = isDayScholar ? ['Parent', 'Mentor'] : ['Parent', 'Warden', 'Mentor'];
-  const approvals = (statuses: ('Approved' | 'Declined' | 'Awaiting')[]) => approvers.map((label, index) => ({ label, status: statuses[index] }));
-
-  return [
-    { date: '24 Aug 2026', type: 'Medical Leave', duration: '2 Days', status: 'Approved', approvals: approvals(['Approved', ...(isDayScholar ? ['Approved'] : ['Approved', 'Approved'])] as ('Approved' | 'Declined' | 'Awaiting')[]) },
-    { date: '16 Jul 2026', type: 'Personal Leave', duration: '1 Day', status: 'Awaiting', approvals: approvals(['Approved', ...(isDayScholar ? ['Awaiting'] : ['Awaiting', 'Awaiting'])] as ('Approved' | 'Declined' | 'Awaiting')[]) },
-    { date: '03 Jun 2026', type: 'Emergency Leave', duration: '3 Days', status: 'Declined', approvals: approvals(['Approved', ...(isDayScholar ? ['Declined'] : ['Declined', 'Approved'])] as ('Approved' | 'Declined' | 'Awaiting')[]) },
-  ];
+export const getDefaultStudentLeaveApplications = (_email?: string): LeaveApplication[] => {
+  return [];
 };
 
-export const normalizeStudentLeaveApplications = (applications: Partial<LeaveApplication>[], email?: string): LeaveApplication[] => {
+const isRecentLeaveApplication = (application: Partial<LeaveApplication> | undefined): boolean => {
+  if (!application || !application.date) return true;
+
+  const match = application.date.match(/(\d{1,2})\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);
+  if (!match) return true;
+
+  const dateValue = new Date(`${match[2]}-${match[1]}-01T00:00:00`);
+  if (Number.isNaN(dateValue.getTime())) return true;
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 45);
+  return dateValue >= cutoff;
+};
+
+export const normalizeStudentLeaveApplications = (applications: Partial<LeaveApplication>[] = [], email?: string): LeaveApplication[] => {
+  if (!Array.isArray(applications) || applications.length === 0) {
+    return [];
+  }
+
   const defaults = getDefaultStudentLeaveApplications(email);
   const isDayScholar = getStudentRecord(email).studentType === 'DAY_SCHOLAR';
   const labels = isDayScholar ? ['Parent', 'Mentor'] : ['Parent', 'Warden', 'Mentor'];
-  return applications.map((application, index) => ({
-    ...defaults[index % defaults.length],
-    ...application,
-    status: application.status === 'Pending' ? 'Awaiting' : application.status || 'Awaiting',
-    approvals: application.approvals?.length ? application.approvals : labels.map((label) => ({ label, status: 'Awaiting' as const })),
-    requestId: application.requestId,
-  }));
+
+  return applications
+    .filter(isRecentLeaveApplication)
+    .map((application, index) => ({
+      ...(defaults[index % Math.max(defaults.length, 1)] || {}),
+      ...application,
+      status: application.status === 'Pending' ? 'Awaiting' : application.status || 'Awaiting',
+      approvals: application.approvals?.length ? application.approvals : labels.map((label) => ({ label, status: 'Awaiting' as const })),
+      requestId: application.requestId,
+    }));
 };

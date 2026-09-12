@@ -18,6 +18,7 @@ export const StudentHostelPage: React.FC = () => {
   const [category, setCategory] = useState('PLUMBING');
   const [priority, setPriority] = useState('MEDIUM');
   const [description, setDescription] = useState('');
+  const [roomNumber, setRoomNumber] = useState(student?.hostelRoom || '212');
 
   const fetchHostel = async () => {
     if (student.studentType === 'DAY_SCHOLAR') {
@@ -41,6 +42,14 @@ export const StudentHostelPage: React.FC = () => {
     fetchHostel();
   }, []);
 
+  useEffect(() => {
+    if (data?.room?.roomNumber) {
+      setRoomNumber(data.room.roomNumber);
+    } else if (student?.hostelRoom) {
+      setRoomNumber(student.hostelRoom);
+    }
+  }, [data, student?.hostelRoom]);
+
   if (student.studentType === 'DAY_SCHOLAR') {
     return (
       <div className="rounded-2xl border border-lavender-200/80 bg-white p-8 shadow-sm">
@@ -57,10 +66,12 @@ export const StudentHostelPage: React.FC = () => {
 
     try {
       setIsSubmittingTicket(true);
+      const finalRoomNumber = roomNumber.trim() || data?.room?.roomNumber || student?.hostelRoom || '212';
       const res = await api.post('/infrastructure/tickets', {
         title,
         category,
-        location: `${data?.room?.blockName || 'Block 4'}, Room ${data?.room?.roomNumber || '212'}`,
+        location: `${data?.room?.blockName || 'Block 4'}, Room ${finalRoomNumber}`,
+        roomNumber: finalRoomNumber,
         priority,
         description,
       });
@@ -178,18 +189,30 @@ export const StudentHostelPage: React.FC = () => {
 
       {/* Maintenance Modal */}
       {showTicketModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-lavender-200 shadow-elevated p-6 animate-in fade-in zoom-in-95">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Report Hostel Facility Issue</h3>
-            <p className="text-xs text-slate-500 mb-4">Submit a dispatch ticket to campus maintenance engineers</p>
+        <div className="fixed inset-0 z-[60] flex h-screen w-screen items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-lavender-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.35)] animate-in fade-in zoom-in-95">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900">Report Hostel Facility Issue</h3>
+                <p className="mt-1 text-xs text-slate-500">Submit a dispatch ticket to campus maintenance engineers</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTicketModal(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
 
             <form onSubmit={handleTicketSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Issue Category</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Issue Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-lavender-50/60 border border-slate-200 text-xs font-serif"
+                  className="w-full rounded-xl border border-slate-200 bg-lavender-50/60 px-3 py-2.5 text-xs font-serif text-slate-700 outline-none transition focus:border-lavender-400 focus:ring-2 focus:ring-lavender-200"
                 >
                   <option value="PLUMBING">Plumbing / Water Supply</option>
                   <option value="ELECTRICAL">Electrical / Lighting</option>
@@ -199,55 +222,68 @@ export const StudentHostelPage: React.FC = () => {
                 </select>
               </div>
 
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-1">
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Room No</label>
+                  <input
+                    type="text"
+                    value={roomNumber}
+                    onChange={(e) => setRoomNumber(e.target.value)}
+                    placeholder="e.g. 212"
+                    className="w-full rounded-xl border border-slate-200 bg-lavender-50/60 px-3 py-2.5 text-xs font-serif text-slate-700 outline-none transition focus:border-lavender-400 focus:ring-2 focus:ring-lavender-200"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Priority</label>
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-lavender-50/60 px-3 py-2.5 text-xs font-serif text-slate-700 outline-none transition focus:border-lavender-400 focus:ring-2 focus:ring-lavender-200"
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High (Within 4 Hours)</option>
+                    <option value="URGENT">Urgent (Immediate Safety Hazard)</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Issue Summary</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Issue Summary</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Study table lamp socket not working"
-                  className="w-full px-3 py-2 rounded-xl bg-lavender-50/60 border border-slate-200 text-xs font-serif"
+                  className="w-full rounded-xl border border-slate-200 bg-lavender-50/60 px-3 py-2.5 text-xs font-serif text-slate-700 outline-none transition focus:border-lavender-400 focus:ring-2 focus:ring-lavender-200"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Priority</label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-lavender-50/60 border border-slate-200 text-xs font-serif"
-                >
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High (Within 4 Hours)</option>
-                  <option value="URGENT">Urgent (Immediate Safety Hazard)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Description / Location Details</label>
+                <label className="mb-1 block text-xs font-bold text-slate-700">Description / Location Details</label>
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Additional details to help the technician..."
-                  className="w-full px-3 py-2 rounded-xl bg-lavender-50/60 border border-slate-200 text-xs font-serif"
+                  className="w-full rounded-xl border border-slate-200 bg-lavender-50/60 px-3 py-2.5 text-xs font-serif text-slate-700 outline-none transition focus:border-lavender-400 focus:ring-2 focus:ring-lavender-200"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-3">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowTicketModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200"
+                  className="rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingTicket}
-                  className="px-5 py-2 rounded-xl bg-lavender-700 hover:bg-lavender-800 text-white font-bold text-xs shadow-sm disabled:opacity-50"
+                  className="rounded-xl bg-lavender-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-lavender-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSubmittingTicket ? 'Submitting...' : 'Dispatch Maintenance Ticket'}
                 </button>

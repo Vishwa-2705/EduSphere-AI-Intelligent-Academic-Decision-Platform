@@ -25,16 +25,23 @@ export const HODReportsPage: React.FC = () => {
   const maxTypeCount = Math.max(...typeBreakdown.map(([, c]) => c), 1);
 
   // Faculty contribution
-  const facultyContribution = facultyMembers
-    .filter(f => f.departmentCode === facultyDepartmentCode)
+  const facultyContribution = Array.from(
+    new Map(
+      facultyMembers
+        .filter(f => f.departmentCode === facultyDepartmentCode && f.facultyRole !== 'HOD')
+        .map(f => [f.email || f.name, f])
+    ).values()
+  )
     .map(f => {
       const fMats = deptMaterials.filter(m => m.facultyId === f.id || m.facultyName === f.name);
+      const displayName = f.name === 'Mr. Arun Kumar' && facultyDepartmentCode === 'CSE' ? 'Dr. Priya Kumar' : f.name;
       return {
-        name: f.name,
+        name: displayName,
         total: fMats.length,
         approved: fMats.filter(m => m.status === 'Approved').length,
       };
-    }).sort((a, b) => b.total - a.total);
+    })
+    .sort((a, b) => b.total - a.total);
 
   // Subject coverage
   const deptSubjects = subjects.filter(s => s.departmentCode === facultyDepartmentCode);

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useFaculty } from '../../../contexts/FacultyContext';
-import { mentorStudents, examSchedule } from '../../../data/facultyData';
 import {
   Users, CalendarCheck, FileSpreadsheet, AlertTriangle, CheckCircle2,
   TrendingUp, Award, Bell, ChevronRight, Clock, MapPin, Send, Sparkles
@@ -11,22 +10,26 @@ import clsx from 'clsx';
 
 export const MentorDashboard: React.FC = () => {
   const { user, profile } = useAuth();
-  const { leaveRequests, sendExamReminder, examSchedule: exams, facultyDepartmentName } = useFaculty();
+  const {
+    myMentees,
+    myMenteeLeaveRequests,
+    sendExamReminder,
+    myDepartmentExams,
+    facultyDepartmentName,
+  } = useFaculty();
 
   const facultyDisplayName = profile?.fullName || user?.email || 'Faculty Mentor';
   const departmentLabel = facultyDepartmentName || 'Department of Information Technology';
-  const myStudents = mentorStudents; // assigned students for this mentor
-  const pendingLeaves = leaveRequests.filter(lr => lr.status === 'Pending');
+  const myStudents = myMentees;
+  const pendingLeaves = myMenteeLeaveRequests.filter(lr => lr.status === 'Pending');
   const atRiskCount = myStudents.filter(s => s.academicStatus === 'At Risk' || s.attendance < 75).length;
-  const avgAttendance = Math.round(myStudents.reduce((acc, s) => acc + s.attendance, 0) / myStudents.length);
-  const avgCgpa = (myStudents.reduce((acc, s) => acc + s.cgpa, 0) / myStudents.length).toFixed(1);
-
-  const quickActions = [
-    { label: 'View My Students', icon: Users, color: 'bg-indigo-600 hover:bg-indigo-700', href: '/faculty/mentor/students' },
-    { label: 'Pending Leaves', icon: FileSpreadsheet, color: 'bg-amber-600 hover:bg-amber-700', href: '/faculty/mentor/leave' },
-    { label: 'Send Exam Reminder', icon: Award, color: 'bg-violet-600 hover:bg-violet-700', href: '/faculty/mentor/exams' },
-    { label: 'Student Performance', icon: TrendingUp, color: 'bg-emerald-600 hover:bg-emerald-700', href: '/faculty/mentor/students' },
-  ];
+  const avgAttendance = myStudents.length
+    ? Math.round(myStudents.reduce((acc, s) => acc + s.attendance, 0) / myStudents.length)
+    : 0;
+  const avgCgpa = myStudents.length
+    ? (myStudents.reduce((acc, s) => acc + s.cgpa, 0) / myStudents.length).toFixed(1)
+    : '0.0';
+  const upcomingExams = myDepartmentExams.filter(exam => exam.status === 'Approved').slice(0, 3);
 
   return (
     <div className="space-y-6 font-serif">
@@ -217,28 +220,8 @@ export const MentorDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 4 Cols: Quick Actions & Upcoming Examination Reminders */}
+        {/* Right 4 Cols: Upcoming Examination Reminders */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Mentor Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((act, i) => {
-                const Icon = act.icon;
-                return (
-                  <Link
-                    key={i}
-                    to={act.href}
-                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl ${act.color} text-white text-xs font-bold transition shadow-sm`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-center leading-tight">{act.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Upcoming Examination Reminder Module */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -250,7 +233,7 @@ export const MentorDashboard: React.FC = () => {
             </div>
 
             <div className="p-5 space-y-4">
-              {exams.slice(0, 3).map(exam => (
+              {upcomingExams.map(exam => (
                 <div key={exam.id} className="p-3.5 rounded-xl bg-lavender-50/50 border border-lavender-200/80 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-xs font-bold text-slate-900 leading-snug">{exam.subject}</h4>

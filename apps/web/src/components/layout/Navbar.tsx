@@ -14,7 +14,6 @@ import clsx from 'clsx';
 import { getDefaultStudentNotifications, getStudentStorageKey, normalizeStudentNotifications, StudentNotification } from '../../data/studentData';
 
 import { useFaculty } from '../../contexts/FacultyContext';
-import { Search } from 'lucide-react';
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -90,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
     if (!user) return 'EduSphere AI';
     switch (user.role) {
       case 'STUDENT':
-        return 'Student Academic Portal';
+        return 'Student Portal';
       case 'FACULTY':
         if (isExclusiveHOD || activeSubRole === 'HOD') return 'HOD Academic Governance Console';
         if (isWarden || activeSubRole === 'WARDEN') return 'Campus Hostel & Residential Console';
@@ -114,9 +113,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-lavender-200/80 bg-white/95 px-6 backdrop-blur-md font-serif shadow-subtle">
+    <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between border-b border-lavender-200/80 bg-white/95 px-4 sm:px-6 lg:px-8 backdrop-blur-md font-serif shadow-subtle">
       {/* Left side: Mobile Toggle & Breadcrumbs / Title */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 py-2">
         <button
           onClick={onToggleSidebar}
           className="rounded-xl p-2 text-slate-500 hover:bg-lavender-50 lg:hidden"
@@ -136,18 +135,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
         </div>
       </div>
 
-      {/* Center: Search Bar */}
-      <div className="hidden lg:flex items-center relative max-w-xs w-full mx-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search materials, students, courses..."
-          className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:border-violet-500 focus:outline-none bg-slate-50/50"
-        />
-      </div>
-
       {/* Right side: Role Badge, Notifications & Profile */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 py-2">
         {/* Role Badge */}
         {user?.role === 'FACULTY' ? (
           <div

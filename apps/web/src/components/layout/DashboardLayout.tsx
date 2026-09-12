@@ -15,8 +15,8 @@ export const DashboardLayout: React.FC = () => {
       <div className="flex flex-1 flex-col overflow-y-auto min-w-0">
         <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 bg-lavender-50 p-6 text-slate-900 sm:p-8 lg:p-10">
-          <div className="mx-auto max-w-screen-2xl space-y-8">
+        <main className="flex-1 overflow-y-auto bg-lavender-50 px-4 py-4 text-slate-900 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full space-y-8">
             <Outlet />
           </div>
         </main>

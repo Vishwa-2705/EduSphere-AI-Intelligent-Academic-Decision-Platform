@@ -31,13 +31,6 @@ export const DeptFacultyDashboard: React.FC = () => {
 
   const recentMaterials = myMaterials.slice(0, 4);
 
-  const quickActions = [
-    { label: 'Upload Material', icon: Upload, color: 'bg-violet-600 hover:bg-violet-700', href: '/faculty/dept/submit' },
-    { label: 'Material Status', icon: TrendingUp, color: 'bg-blue-600 hover:bg-blue-700', href: '/faculty/dept/status' },
-    { label: 'My Subjects', icon: BookOpen, color: 'bg-emerald-600 hover:bg-emerald-700', href: '/faculty/dept/subjects' },
-    { label: 'Notifications', icon: AlertCircle, color: 'bg-amber-500 hover:bg-amber-600', href: '/faculty/dept/notifications' },
-  ];
-
   return (
     <div className="space-y-6 font-serif">
       {/* Welcome Banner */}
@@ -184,24 +177,8 @@ export const DeptFacultyDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Quick Actions + Subject List */}
+        {/* Right: Subject List */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((a, i) => {
-                const Icon = a.icon;
-                return (
-                  <button key={i} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl ${a.color} text-white text-xs font-bold transition shadow-sm`}>
-                    <Icon className="h-5 w-5" />
-                    <span className="text-center leading-tight">{a.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* My Subjects */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
             <h3 className="text-sm font-bold text-slate-900 mb-4">My Assigned Subjects</h3>

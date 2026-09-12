@@ -4,14 +4,18 @@ import { getStudentRecord } from '../../data/studentData';
 import { ShieldCheck, BellRing, LockKeyhole, UserCog } from 'lucide-react';
 
 export const StudentSettingsPage: React.FC = () => {
-  const { user, changePassword } = useAuth();
+  const { user, profile, changePassword } = useAuth();
   const student = getStudentRecord(user?.email);
+  const isFacultyUser = user?.role === 'FACULTY' || user?.role === 'MENTOR';
+  const accountName = isFacultyUser ? (profile?.fullName || 'Dr. Priya Kumar') : (student?.name || 'Student User');
+  const accountRegisterNumber = isFacultyUser ? (profile?.registrationNo || 'FAC-CSE-001') : (student?.registerNumber || 'N/A');
+  const accountEmail = user?.email || 'priya.kumar@edusphere.ai';
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
-  const [securityEmail] = useState(user?.email || 'aarav.patel@edusphere.ai');
+  const [securityEmail] = useState(accountEmail);
 
   const handlePasswordChange = async () => {
     const result = await changePassword(currentPassword, newPassword, confirmPassword);
@@ -41,9 +45,9 @@ export const StudentSettingsPage: React.FC = () => {
             <UserCog className="h-4 w-4 text-lavender-700" /> Account settings
           </h3>
           <div className="space-y-4 text-sm text-slate-700">
-            <div className="p-4 rounded-xl bg-lavender-50 border border-lavender-100"><p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">Full Name</p><p className="font-bold text-slate-900">{student.name}</p></div>
+            <div className="p-4 rounded-xl bg-lavender-50 border border-lavender-100"><p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">Full Name</p><p className="font-bold text-slate-900">{accountName}</p></div>
             <div className="p-4 rounded-xl bg-lavender-50 border border-lavender-100"><p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">Institutional Email</p><p className="font-bold text-slate-900">{securityEmail}</p></div>
-            <div className="p-4 rounded-xl bg-lavender-50 border border-lavender-100"><p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">Register Number</p><p className="font-bold text-slate-900">{student.registerNumber}</p></div>
+            <div className="p-4 rounded-xl bg-lavender-50 border border-lavender-100"><p className="text-[11px] uppercase tracking-wider text-slate-500 mb-1">Register Number</p><p className="font-bold text-slate-900">{accountRegisterNumber}</p></div>
           </div>
         </div>
 

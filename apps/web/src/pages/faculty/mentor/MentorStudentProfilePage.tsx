@@ -14,10 +14,18 @@ export const MentorStudentProfilePage: React.FC = () => {
   const { studentId } = useParams();
   const { user, profile } = useAuth();
   const mentorName = profile?.fullName || user?.email || 'Faculty Mentor';
-  const { leaveRequests } = useFaculty();
-  const [student, setStudent] = useState<StudentRecordItem>(
-    mentorStudents.find(s => s.id === studentId) || mentorStudents[0]
+  const { leaveRequests, myMentees, facultyDepartmentName } = useFaculty();
+  const [student, setStudent] = useState<StudentRecordItem | null>(
+    myMentees.find(s => s.id === studentId) || myMentees[0] || null
   );
+
+  if (!student) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm text-sm text-slate-600">
+        No mentee records are available for this mentor in {facultyDepartmentName}.
+      </div>
+    );
+  }
 
   const studentLeaves = leaveRequests.filter(lr => lr.studentId === student.id);
 

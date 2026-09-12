@@ -6,12 +6,12 @@ import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 
 export const MentorStudentsPage: React.FC = () => {
-  const { leaveRequests } = useFaculty();
+  const { leaveRequests, myMentees, facultyDepartmentName } = useFaculty();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sectionFilter, setSectionFilter] = useState('All');
 
-  const filteredStudents = mentorStudents.filter(s => {
+  const filteredStudents = myMentees.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.regNo.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || s.academicStatus === statusFilter;
@@ -27,18 +27,18 @@ export const MentorStudentsPage: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700 mb-2">
               <Users className="h-3.5 w-3.5" />
-              <span>Assigned Mentorship Group • Information Technology</span>
+              <span>Assigned Mentorship Group • {facultyDepartmentName}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               My Students
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              You are assigned to mentor <strong className="text-slate-800">{mentorStudents.length} undergraduate students</strong> in III Year B.Tech IT.
+              You are assigned to mentor <strong className="text-slate-800">{myMentees.length} undergraduate students</strong> in {facultyDepartmentName}.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="badge-indigo">{mentorStudents.length} Assigned Mentees</span>
+            <span className="badge-indigo">{myMentees.length} Assigned Mentees</span>
           </div>
         </div>
       </div>

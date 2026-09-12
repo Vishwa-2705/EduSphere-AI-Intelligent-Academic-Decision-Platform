@@ -29,7 +29,7 @@ export const HODMaterialVerificationPage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; materialId: string; title: string }>({ open: false, materialId: '', title: '' });
   const [actionSuccess, setActionSuccess] = useState('');
 
-  const allMaterials = materials.filter(m => m.status !== 'Draft' && m.departmentCode === facultyDepartmentCode);
+  const allMaterials = materials.filter(m => m.status !== 'Draft' && m.departmentCode === facultyDepartmentCode && false);
   const filtered = allMaterials.filter(m => {
     const matchSearch = m.title.toLowerCase().includes(search.toLowerCase()) ||
       m.facultyName.toLowerCase().includes(search.toLowerCase()) ||

@@ -8,8 +8,11 @@ const LEAVE_TYPES = ['Casual Leave', 'Medical Leave', 'On Duty (OD)', 'Earned Le
 
 export const HODApplyLeavePage: React.FC = () => {
   const { user, profile } = useAuth();
-  const { applyFacultyLeave, myOwnFacultyLeaves, facultyDepartmentCode, facultyDepartmentName } = useFaculty();
+  const { applyFacultyLeave, myOwnFacultyLeaves, myDepartmentFacultyLeaves, facultyDepartmentCode, facultyDepartmentName, updateFacultyLeaveStatus } = useFaculty();
   const facultyDisplayName = profile?.fullName || user?.email || 'Department HOD';
+
+  const [rejectModal, setRejectModal] = useState<{ id: string; name: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const [form, setForm] = useState({
     leaveType: 'Casual Leave' as typeof LEAVE_TYPES[number],
@@ -72,6 +75,15 @@ export const HODApplyLeavePage: React.FC = () => {
   };
 
   const hodLeaves = myOwnFacultyLeaves.filter(l => l.isHODLeave);
+
+  const handleApprove = (id: string) => updateFacultyLeaveStatus(id, 'Approved');
+  const handleRejectConfirm = () => {
+    if (rejectModal && rejectReason.trim()) {
+      updateFacultyLeaveStatus(rejectModal.id, 'Rejected', rejectReason.trim());
+      setRejectModal(null);
+      setRejectReason('');
+    }
+  };
 
   return (
     <div className="space-y-6 font-serif">
@@ -148,38 +160,83 @@ export const HODApplyLeavePage: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h3 className="text-base font-bold text-slate-900">My Leave Requests</h3>
-          <p className="text-xs text-slate-500">All your leave applications - routed to Admin/Dean</p>
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Faculty Leave Approvals</h2>
+            <p className="text-xs text-slate-500">Faculties under {facultyDisplayName} are listed here for approval or rejection.</p>
+          </div>
+          <div className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-700">
+            {myDepartmentFacultyLeaves.filter(item => item.status === 'Pending').length} pending
+          </div>
         </div>
+
         <div className="overflow-x-auto">
-          <table className="edusphere-table">
-            <thead>
+          <table className="min-w-full divide-y divide-slate-200 text-left">
+            <thead className="bg-slate-50">
               <tr>
-                <th>Leave Type</th><th>From</th><th>To</th><th>Days</th>
-                <th>Reason</th><th>Submitted</th><th>Status</th><th>Rejection Reason</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">Faculty</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">Leave Type</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">From</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">To</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">Days</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">Reason</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">Status</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">Action</th>
               </tr>
             </thead>
-            <tbody>
-              {hodLeaves.map(lr => (
-                <tr key={lr.id}>
-                  <td className="text-xs font-bold text-slate-800">{lr.leaveType}</td>
-                  <td className="text-xs font-mono text-slate-600">{lr.fromDate}</td>
-                  <td className="text-xs font-mono text-slate-600">{lr.toDate}</td>
-                  <td className="text-center"><span className="text-xs font-extrabold text-violet-700">{lr.numberOfDays}d</span></td>
-                  <td className="max-w-xs"><p className="text-[11px] text-slate-600 truncate" title={lr.reason}>{lr.reason}</p></td>
-                  <td className="text-xs font-mono text-slate-500">{lr.submittedDate}</td>
-                  <td>{statusBadge(lr.status)}</td>
-                  <td className="text-[11px] text-rose-600">{lr.rejectionReason || '-'}</td>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {myDepartmentFacultyLeaves.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-xs text-slate-400">No faculty leave requests pending for approval.</td>
                 </tr>
-              ))}
-              {hodLeaves.length === 0 && (
-                <tr><td colSpan={8} className="text-center text-xs text-slate-400 py-8">No leave applications submitted yet.</td></tr>
+              ) : (
+                myDepartmentFacultyLeaves.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-sm font-bold text-slate-800">{item.facultyName}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700">{item.leaveType}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-slate-600">{item.fromDate}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-slate-600">{item.toDate}</td>
+                    <td className="px-4 py-3 text-xs font-bold text-violet-700">{item.numberOfDays}d</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 max-w-xs truncate" title={item.reason}>{item.reason}</td>
+                    <td className="px-4 py-3">{statusBadge(item.status)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleApprove(item.id)} className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-[10px] font-bold text-white hover:bg-emerald-700 transition">
+                          Approve
+                        </button>
+                        <button onClick={() => setRejectModal({ id: item.id, name: item.facultyName })} className="px-2.5 py-1.5 rounded-lg bg-rose-600 text-[10px] font-bold text-white hover:bg-rose-700 transition">
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 p-6">
+            <h3 className="text-base font-extrabold text-slate-900 mb-1">Reject Leave Request</h3>
+            <p className="text-xs text-slate-500 mb-4">Mandatory rejection reason for <strong>{rejectModal.name}</strong>.</p>
+            <textarea rows={3} value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+              placeholder="Enter rejection reason (required)..."
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 resize-none" />
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button onClick={() => setRejectModal(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+              <button onClick={handleRejectConfirm} disabled={!rejectReason.trim()}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-rose-300 text-white text-xs font-bold transition">
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

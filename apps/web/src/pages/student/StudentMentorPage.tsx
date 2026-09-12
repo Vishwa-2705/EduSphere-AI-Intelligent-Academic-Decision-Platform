@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CalendarClock, Mail, Phone, MessageSquare, Send } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFaculty } from '../../contexts/FacultyContext';
 import { getStudentRecord } from '../../data/studentData';
 
 const preferredSlots = [
@@ -13,6 +14,7 @@ const preferredSlots = [
 
 export const StudentMentorPage: React.FC = () => {
   const { user } = useAuth();
+  const { addNotification } = useFaculty();
   const student = getStudentRecord(user?.email);
   const mentor = {
     name: student.mentorName,
@@ -31,6 +33,17 @@ export const StudentMentorPage: React.FC = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!requestMessage.trim()) return;
+
+    addNotification({
+      recipientEmail: student.mentorEmail,
+      recipientRole: 'MENTOR',
+      departmentCode: student.department,
+      title: 'Mentor Meeting Request',
+      message: `${student.name} requested a mentoring meeting for ${preferredSlot}. Reason: ${requestMessage.trim()}`,
+      category: 'Academic',
+      isRead: false,
+    });
+
     setSubmitted(true);
     setRequestMessage('');
   };

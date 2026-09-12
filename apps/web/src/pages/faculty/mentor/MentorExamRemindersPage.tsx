@@ -8,7 +8,8 @@ import {
 import clsx from 'clsx';
 
 export const MentorExamRemindersPage: React.FC = () => {
-  const { examSchedule: exams, sendExamReminder } = useFaculty();
+  const { myDepartmentExams, sendExamReminder, facultyDepartmentName } = useFaculty();
+  const exams = myDepartmentExams.filter(exam => exam.status === 'Approved');
   const [selectedType, setSelectedType] = useState<string>('All');
   const [broadcastNotice, setBroadcastNotice] = useState('');
   const [announcementText, setAnnouncementText] = useState('');
@@ -17,13 +18,11 @@ export const MentorExamRemindersPage: React.FC = () => {
 
   const examTypes: string[] = [
     'All',
+    'Periodic Test 1',
+    'Periodic Test 2',
     'Internal Exam',
-    'Model Exam',
-    'Semester Exam',
     'Lab Exam',
-    'Practical Exam',
-    'Project Review',
-    'Viva',
+    'Semester Exam',
   ];
 
   const filteredExams = selectedType === 'All'
@@ -62,7 +61,7 @@ export const MentorExamRemindersPage: React.FC = () => {
             Exam Reminder & Advisory System
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Broadcast scheduled exam alerts, hall plans, and study advice directly to your assigned student cohort.
+            Department-approved examination schedule for {facultyDepartmentName} and advisory notices for your assigned student cohort.
           </p>
         </div>
 

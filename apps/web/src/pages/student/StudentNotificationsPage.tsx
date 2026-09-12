@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, BookOpen, CreditCard, ShieldCheck, Clock3, Megaphone, CheckCircle2, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getDefaultStudentNotifications, getStudentStorageKey, normalizeStudentNotifications } from '../../data/studentData';
+import { getDefaultStudentNotifications, getStudentStorageKey, getStudentRecord, normalizeStudentNotifications } from '../../data/studentData';
 
 const initialNotifications = getDefaultStudentNotifications();
 const iconMap = {
@@ -15,6 +15,8 @@ const iconMap = {
 
 export const StudentNotificationsPage: React.FC = () => {
   const { user } = useAuth();
+  const student = user?.email ? getStudentRecord(user.email) : getStudentRecord();
+  const isHosteller = (student.accommodationStatus || (student.studentType === 'DAY_SCHOLAR' ? 'Day Scholar' : 'Hosteller')) === 'Hosteller';
   const [notifications, setNotifications] = useState<typeof initialNotifications>(() => {
     const storageKey = getStudentStorageKey(user?.email, 'notifications');
     const saved = localStorage.getItem(storageKey);
@@ -40,6 +42,13 @@ export const StudentNotificationsPage: React.FC = () => {
     }
   }, [user?.email]);
 
+  const displayNotifications = notifications.filter((note) => {
+    if (!isHosteller && (note.category === 'Hostel' || (note.category === 'Fees' && note.title.toLowerCase().includes('hostel')))) {
+      return false;
+    }
+    return true;
+  });
+
   const openNotification = (index: number) => {
     const nextNotifications = notifications.map((note, i) => (i === index ? { ...note, unread: false, expanded: !note.expanded } : note));
     setNotifications(nextNotifications);
@@ -57,7 +66,7 @@ export const StudentNotificationsPage: React.FC = () => {
           </div>
           <div className="rounded-xl bg-lavender-100 border border-lavender-200 text-lavender-800 px-4 py-2 text-right">
             <p className="text-[10px] font-bold uppercase tracking-wider">Unread</p>
-            <p className="text-sm font-bold">{notifications.filter((n) => n.unread).length}</p>
+            <p className="text-sm font-bold">{displayNotifications.filter((n) => n.unread).length}</p>
           </div>
         </div>
       </div>
@@ -65,11 +74,11 @@ export const StudentNotificationsPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-lavender-200/80 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-lavender-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900">All Notifications</h3>
-          <span className="badge-slate">{notifications.length} Items</span>
+          <span className="badge-slate">{displayNotifications.length} Items</span>
         </div>
 
         <div className="divide-y divide-lavender-100">
-          {notifications.map((note, idx) => {
+          {displayNotifications.map((note, idx) => {
             const Icon = iconMap[note.icon as keyof typeof iconMap] || Bell;
             return (
               <button key={idx} type="button" onClick={() => openNotification(idx)} className={note.unread ? 'w-full bg-lavender-50/40 text-left' : 'w-full bg-white text-left'}>

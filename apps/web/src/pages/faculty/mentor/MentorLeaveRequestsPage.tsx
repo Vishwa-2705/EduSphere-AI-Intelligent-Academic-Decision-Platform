@@ -8,7 +8,7 @@ import {
 import clsx from 'clsx';
 
 export const MentorLeaveRequestsPage: React.FC = () => {
-  const { leaveRequests, updateLeaveStatus } = useFaculty();
+  const { leaveRequests, updateLeaveStatus, myMentees } = useFaculty();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [rejectModal, setRejectModal] = useState<{ open: boolean; request: LeaveRequest | null }>({
@@ -18,12 +18,17 @@ export const MentorLeaveRequestsPage: React.FC = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionNotice, setActionNotice] = useState('');
 
+  const menteeIds = new Set(myMentees.map(student => student.id));
+
   const filtered = leaveRequests.filter(lr => {
+    const belongsToMentor = menteeIds.has(lr.studentId) || myMentees.some(student => student.regNo === lr.regNo);
+    if (!belongsToMentor) return false;
+
     const matchSearch = lr.studentName.toLowerCase().includes(search.toLowerCase()) ||
       lr.regNo.toLowerCase().includes(search.toLowerCase()) ||
       lr.reason.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || lr.status === statusFilter;
-    return matchSearch && matchStatus;
+    return matchSearch && matchStatus && lr.status !== 'Approved';
   });
 
   const handleApprove = (lr: LeaveRequest) => {
@@ -50,9 +55,9 @@ export const MentorLeaveRequestsPage: React.FC = () => {
     setTimeout(() => setActionNotice(''), 5000);
   };
 
-  const pendingCount = leaveRequests.filter(l => l.status === 'Pending').length;
-  const approvedCount = leaveRequests.filter(l => l.status === 'Approved').length;
-  const rejectedCount = leaveRequests.filter(l => l.status === 'Rejected').length;
+  const pendingCount = filtered.filter(l => l.status === 'Pending').length;
+  const approvedCount = filtered.filter(l => l.status === 'Approved').length;
+  const rejectedCount = filtered.filter(l => l.status === 'Rejected').length;
 
   return (
     <div className="space-y-6 font-serif">

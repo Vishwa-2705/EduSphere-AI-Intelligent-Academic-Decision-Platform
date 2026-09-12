@@ -35,6 +35,10 @@ import { HODDepartmentFacultyPage } from './pages/faculty/hod/HODDepartmentFacul
 import { HODReportsPage } from './pages/faculty/hod/HODReportsPage';
 import { HODNotificationsPage } from './pages/faculty/hod/HODNotificationsPage';
 import { HODApplyLeavePage } from './pages/faculty/hod/HODApplyLeavePage';
+import { HODFacultyLeaveApprovalsPage } from './pages/faculty/hod/HODFacultyLeaveApprovalsPage';
+import { HODCreateFacultyTimetablePage } from './pages/faculty/hod/HODCreateFacultyTimetablePage';
+import { HODCreateStudentTimetablePage } from './pages/faculty/hod/HODCreateStudentTimetablePage';
+import { HODCreateExamTimetablePage } from './pages/faculty/hod/HODCreateExamTimetablePage';
 
 // Department Faculty Sub-Module
 import { DeptFacultyDashboard } from './pages/faculty/dept/DeptFacultyDashboard';
@@ -43,6 +47,8 @@ import { DeptFacultySubmitMaterialPage } from './pages/faculty/dept/DeptFacultyS
 import { DeptFacultyMaterialStatusPage } from './pages/faculty/dept/DeptFacultyMaterialStatusPage';
 import { DeptFacultyNotificationsPage } from './pages/faculty/dept/DeptFacultyNotificationsPage';
 import { DeptFacultyLeavePage } from './pages/faculty/dept/DeptFacultyLeavePage';
+import { DeptFacultyTimetablePage } from './pages/faculty/dept/DeptFacultyTimetablePage';
+import { DeptFacultyExamTimetablePage } from './pages/faculty/dept/DeptFacultyExamTimetablePage';
 
 // Mentor Sub-Module (Inside Faculty Module)
 import { MentorDashboard } from './pages/faculty/mentor/MentorDashboard';
@@ -50,6 +56,7 @@ import { MentorStudentsPage } from './pages/faculty/mentor/MentorStudentsPage';
 import { MentorStudentProfilePage } from './pages/faculty/mentor/MentorStudentProfilePage';
 import { MentorLeaveRequestsPage } from './pages/faculty/mentor/MentorLeaveRequestsPage';
 import { MentorExamRemindersPage } from './pages/faculty/mentor/MentorExamRemindersPage';
+import { MentorMeetingRequestsPage } from './pages/faculty/mentor/MentorMeetingRequestsPage';
 import { MentorNotificationsPage } from './pages/faculty/mentor/MentorNotificationsPage';
 
 // Warden Sub-Module (Inside Faculty Module)
@@ -136,7 +143,12 @@ export const App: React.FC = () => {
                 <Route path="/faculty/hod/approved" element={<HODApprovedMaterialsPage />} />
                 <Route path="/faculty/hod/reports" element={<HODReportsPage />} />
                 <Route path="/faculty/hod/leave" element={<HODApplyLeavePage />} />
+                <Route path="/faculty/hod/leave-approvals" element={<HODFacultyLeaveApprovalsPage />} />
+                <Route path="/faculty/hod/faculty-timetable" element={<HODCreateFacultyTimetablePage />} />
+                <Route path="/faculty/hod/student-timetable" element={<HODCreateStudentTimetablePage />} />
+                <Route path="/faculty/hod/exam-timetable" element={<HODCreateExamTimetablePage />} />
                 <Route path="/faculty/hod/notifications" element={<HODNotificationsPage />} />
+                <Route path="/faculty/hod/settings" element={<StudentSettingsPage />} />
 
                 {/* Department Faculty Sub-Routes */}
                 <Route path="/faculty/dept" element={<DeptFacultyDashboard />} />
@@ -144,6 +156,8 @@ export const App: React.FC = () => {
                 <Route path="/faculty/dept/submit" element={<DeptFacultySubmitMaterialPage />} />
                 <Route path="/faculty/dept/status" element={<DeptFacultyMaterialStatusPage />} />
                 <Route path="/faculty/dept/leave" element={<DeptFacultyLeavePage />} />
+                <Route path="/faculty/dept/faculty-timetable" element={<DeptFacultyTimetablePage />} />
+                <Route path="/faculty/dept/exam-timetable" element={<DeptFacultyExamTimetablePage />} />
                 <Route path="/faculty/dept/notifications" element={<DeptFacultyNotificationsPage />} />
 
                 {/* Mentor Sub-Routes */}
@@ -152,6 +166,7 @@ export const App: React.FC = () => {
                 <Route path="/faculty/mentor/students/:id" element={<MentorStudentProfilePage />} />
                 <Route path="/faculty/mentor/leave" element={<MentorLeaveRequestsPage />} />
                 <Route path="/faculty/mentor/exams" element={<MentorExamRemindersPage />} />
+                <Route path="/faculty/mentor/meetings" element={<MentorMeetingRequestsPage />} />
                 <Route path="/faculty/mentor/notifications" element={<MentorNotificationsPage />} />
 
                 {/* Warden Sub-Routes */}

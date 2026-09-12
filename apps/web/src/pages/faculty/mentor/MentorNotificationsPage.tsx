@@ -1,13 +1,15 @@
 import React from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useFaculty } from '../../../contexts/FacultyContext';
 import { Bell, FileSpreadsheet, Award, AlertTriangle, CheckCheck } from 'lucide-react';
 import clsx from 'clsx';
 
 export const MentorNotificationsPage: React.FC = () => {
+  const { user } = useAuth();
   const { notifications, markNotificationRead, markAllRead } = useFaculty();
 
   const mentorNotifs = notifications.filter(
-    n => n.recipientRole === 'MENTOR' || (n.recipientRole as string) === 'ALL'
+    n => n.recipientRole === 'MENTOR' && (n.recipientEmail === user?.email || n.recipientEmail === 'all' || !n.recipientEmail)
   );
 
   const unreadCount = mentorNotifs.filter(n => !n.isRead).length;

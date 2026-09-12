@@ -186,18 +186,6 @@ export const StudentDashboard: React.FC = () => {
   const mentor = data?.mentor;
   const isFeePaid = Number(feeSummary.balanceAmount || student.balanceFee) === 0 || feeSummary.status === 'PAID';
 
-  const upcomingExams = [
-    { code: 'CS401', subject: 'Design & Analysis of Algorithms', date: 'March 14, 2026', time: '09:30 AM - 12:30 PM', venue: 'Exam Hall 3', weight: '30%' },
-    { code: 'CS402', subject: 'Database Management Systems', date: 'March 18, 2026', time: '09:30 AM - 12:30 PM', venue: 'Exam Hall 1', weight: '30%' },
-    { code: 'CS403', subject: 'Artificial Intelligence & ML', date: 'March 22, 2026', time: '02:00 PM - 05:00 PM', venue: 'AI Lab Complex', weight: '30%' },
-  ];
-
-  const studyMaterials = [
-    { title: 'Dynamic Programming & Graph Algorithms Notes', course: 'CS401', faculty: 'Dr. Rajesh Sharma', date: 'Yesterday', size: '3.4 MB' },
-    { title: 'Relational Indexing & B+ Trees Presentation', course: 'CS402', faculty: 'Prof. Anita Verma', date: '3 days ago', size: '5.1 MB' },
-    { title: 'Neural Networks & Deep Learning Lab Manual', course: 'CS403', faculty: 'Dr. Vikram Sethi', date: '5 days ago', size: '2.8 MB' },
-  ];
-
   return (
     <div className="space-y-6 font-serif">
       {/* Welcome Section */}
@@ -268,86 +256,13 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Main Content Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Exams & other items (timetable and attendance removed) */}
         <div className="space-y-6 lg:col-span-8">
-          {/* Upcoming Examinations */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Upcoming Examinations</h3>
-                <p className="text-xs text-slate-500">Mid-Term & Final Semester Examination Schedule</p>
-              </div>
-              <span className="badge-purple">Semester VI Exams</span>
-            </div>
-
-            <div className="p-6 divide-y divide-slate-100">
-              {upcomingExams.map((ex, idx) => (
-                <div key={idx} className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-mono font-bold text-xs">
-                        {ex.code}
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900">{ex.subject}</h4>
-                    </div>
-                    <div className="mt-1 flex items-center gap-4 text-xs text-slate-500">
-                      <span className="flex items-center gap-1 font-mono">
-                        <Calendar className="h-3.5 w-3.5 text-purple-600" />
-                        {ex.date}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-purple-600" />
-                        {ex.time}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5 text-purple-600" />
-                        {ex.venue}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="badge-slate self-start sm:self-auto">Weightage: {ex.weight}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recently Uploaded Study Materials */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Study Materials</h3>
-                <p className="text-xs text-slate-500">Recently uploaded lecture notes and lab presentations</p>
-              </div>
-              <span className="badge-indigo">Digital Repository</span>
-            </div>
-
-            <div className="p-6 space-y-3">
-              {studyMaterials.map((mat, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">{mat.title}</h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {mat.course} • Uploaded by {mat.faculty} ({mat.date}) • {mat.size}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Download</span>
-                  </button>
-                </div>
-              ))}
-            </div>
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+            <h3 className="text-base font-bold text-slate-900">Academic Snapshot</h3>
+            <p className="mt-2 text-sm text-slate-500">Departmental progress, attendance, and mentoring updates appear here.</p>
           </div>
         </div>
 
-        {/* Right Column: AI Insight, Mentor & Fee Status */}
         <div className="space-y-6 lg:col-span-4">
           {/* AI Academic Health Insight Card */}
           <div className="bg-white rounded-2xl border border-indigo-200/80 shadow-sm p-6 relative overflow-hidden">

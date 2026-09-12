@@ -126,17 +126,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return null;
     }
 
-    // Student defaults
     const studentDefaults: Record<string, string> = {
-      'aarav@edusphere.ai': 'Student@12345',
-      'nisha.kulkarni@edusphere.ai': 'Student@12345',
-      'priya.sharma@edusphere.ai': 'Student@12345',
-      'rohit.kumar@edusphere.ai': 'Student@12345',
-      'rahul.s@student.edusphere.ai': 'Student@12345',
+      'aarav@edusphere.ai': 'aarav@12',
+      'nisha.kulkarni@edusphere.ai': 'nisha@12',
+      'priya.sharma@edusphere.ai': 'priya@12',
+      'rohit.kumar@edusphere.ai': 'rohit@12',
       'rahul.s@edusphere.ai': 'Student@12345',
-      'sameer.sen@edusphere.ai': 'Student@12345',
-      'vikram.s@student.edusphere.ai': 'Student@12345',
-      'vikram.s@edusphere.ai': 'Student@12345',
+      'rahul@edusphere.ai': 'Student@12345',
     };
     return studentDefaults[normalizedEmail] || null;
   };
@@ -172,11 +168,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'nisha.kulkarni@edusphere.ai',
         'priya.sharma@edusphere.ai',
         'rohit.kumar@edusphere.ai',
-        'rahul.s@student.edusphere.ai',
         'rahul.s@edusphere.ai',
-        'sameer.sen@edusphere.ai',
-        'vikram.s@student.edusphere.ai',
-        'vikram.s@edusphere.ai',
+        'rahul@edusphere.ai',
       ];
       return allowedStudents.includes(normalizedEmail) || normalizedEmail.includes('student.');
     }
@@ -203,11 +196,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'mentor@edusphere.ai',
       'nisha.kulkarni@edusphere.ai',
       'priya.sharma@edusphere.ai',
-      'rahul.s@student.edusphere.ai',
       'rahul.s@edusphere.ai',
-      'sameer.sen@edusphere.ai',
-      'vikram.s@student.edusphere.ai',
-      'vikram.s@edusphere.ai',
+      'rahul@edusphere.ai',
     ];
     return allUsers.includes(normalizedEmail);
   };
@@ -236,20 +226,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const studentEmails = [
+      'aarav@edusphere.ai',
       'nisha.kulkarni@edusphere.ai',
       'priya.sharma@edusphere.ai',
-      'rahul.s@student.edusphere.ai',
+      'rohit.kumar@edusphere.ai',
       'rahul.s@edusphere.ai',
-      'sameer.sen@edusphere.ai',
-      'vikram.s@student.edusphere.ai',
-      'vikram.s@edusphere.ai',
+      'rahul@edusphere.ai',
     ];
     if (studentEmails.includes(normalizedEmail) || normalizedEmail.includes('student.')) {
-      return 'STUDENT';
-    }
-
-    // Dual accounts (Aarav, Rohit) default to student if unspecified
-    if (normalizedEmail === 'aarav@edusphere.ai' || normalizedEmail === 'rohit.kumar@edusphere.ai') {
       return 'STUDENT';
     }
 
@@ -309,7 +293,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           user: `std-${normalizedEmail.split('@')[0]}`,
           firstName: fullName.split(' ')[0],
           lastName: fullName.split(' ').slice(1).join(' '),
-          registrationNo: normalizedEmail.includes('aarav') ? '22CS084' : normalizedEmail.includes('nisha') ? '23AI042' : '22CS105',
+          registrationNo: normalizedEmail.includes('aarav')
+            ? '22CS084'
+            : normalizedEmail.includes('priya.sharma')
+              ? '22EC091'
+              : normalizedEmail.includes('nisha')
+                ? '23AI042'
+                : normalizedEmail.includes('rohit.kumar')
+                  ? '22ME105'
+                  : normalizedEmail.includes('rahul')
+                    ? '22IT101'
+                    : '22CS105',
           fullName,
           department: { _id: `dept-${deptCode.toLowerCase()}`, code: deptCode, name: deptName, establishedYear: 2008 },
         },

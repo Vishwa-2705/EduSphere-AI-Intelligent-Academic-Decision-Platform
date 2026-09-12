@@ -20,11 +20,20 @@ export const StudentLeavePage: React.FC = () => {
   const [applications, setApplications] = useState<LeaveApplication[]>(() => {
     const storageKey = getStudentStorageKey(user?.email, 'leave_applications');
     const saved = localStorage.getItem(storageKey);
-    if (!saved) return getDefaultStudentLeaveApplications(user?.email);
+    const empty: LeaveApplication[] = [];
+    if (!saved) {
+      localStorage.setItem(storageKey, JSON.stringify(empty));
+      return empty;
+    }
+
     try {
-      return normalizeStudentLeaveApplications(JSON.parse(saved), user?.email);
+      const parsed = JSON.parse(saved);
+      const filtered = normalizeStudentLeaveApplications(Array.isArray(parsed) ? parsed : [], user?.email);
+      localStorage.setItem(storageKey, JSON.stringify(filtered));
+      return filtered;
     } catch {
-      return getDefaultStudentLeaveApplications(user?.email);
+      localStorage.setItem(storageKey, JSON.stringify(empty));
+      return empty;
     }
   });
   const [error, setError] = useState('');
@@ -32,14 +41,19 @@ export const StudentLeavePage: React.FC = () => {
   useEffect(() => {
     const storageKey = getStudentStorageKey(user?.email, 'leave_applications');
     const saved = localStorage.getItem(storageKey);
+    const empty: LeaveApplication[] = [];
     if (saved) {
       try {
-        setApplications(normalizeStudentLeaveApplications(JSON.parse(saved), user?.email));
+        const next = normalizeStudentLeaveApplications(JSON.parse(saved), user?.email);
+        setApplications(next);
+        localStorage.setItem(storageKey, JSON.stringify(next));
       } catch {
-        setApplications(getDefaultStudentLeaveApplications(user?.email));
+        setApplications(empty);
+        localStorage.setItem(storageKey, JSON.stringify(empty));
       }
     } else {
-      setApplications(getDefaultStudentLeaveApplications(user?.email));
+      setApplications(empty);
+      localStorage.setItem(storageKey, JSON.stringify(empty));
     }
   }, [user?.email]);
 
@@ -178,36 +192,39 @@ export const StudentLeavePage: React.FC = () => {
         </div>
 
         <div className="xl:col-span-7">
-          <div className="bg-white rounded-2xl border border-lavender-200/80 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-lavender-100 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Previous Applications</h3>
-              <span className="badge-lavender">{applications.length} Records</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="edusphere-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Leave Type</th>
-                    <th>Duration</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {applications.map((item, idx) => (
-                    <React.Fragment key={idx}>
-                    <tr>
-                      <td className="font-mono text-slate-700">{item.date}</td>
-                      <td className="font-bold text-slate-900">{item.type}</td>
-                      <td className="font-mono text-slate-700">{item.duration}</td>
-                      <td><span className={statusColor(getApplicationStatus(item))}>{getApplicationStatus(item)}</span></td>
-                    </tr>
-                    <tr><td colSpan={4} className="bg-lavender-50/40"><div className="flex flex-wrap gap-2 py-2">{item.approvals.map((approval) => <span key={approval.label} className={statusColor(approval.status === 'Declined' ? 'Rejected' : approval.status === 'Approved' ? 'Approved' : 'Pending')}>{approval.label}: {approval.status}</span>)}</div></td></tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="bg-white rounded-2xl border border-lavender-200/80 p-6 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 mb-4 pb-3 border-b border-lavender-100 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-lavender-700" /> Leave Request Details
+            </h3>
+            {applications.length === 0 ? (
+              <p className="text-xs text-slate-400 py-8 text-center">No leave requests submitted yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {applications.map((application, index) => (
+                  <div key={`${application.requestId || index}`} className="rounded-2xl border border-lavender-200 bg-lavender-50/40 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Leave request #{index + 1}</p>
+                        <p className="text-sm font-extrabold text-slate-900">{application.type}</p>
+                      </div>
+                      <span className={statusColor(getApplicationStatus(application))}>{getApplicationStatus(application)}</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+                      <div><span className="text-slate-500">From:</span> <span className="font-bold">{application.date}</span></div>
+                      <div><span className="text-slate-500">Duration:</span> <span className="font-bold">{application.duration}</span></div>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {application.approvals.map((approval) => (
+                        <div key={`${application.requestId}-${approval.label}`} className="flex items-center justify-between rounded-xl bg-white px-3 py-2 border border-lavender-100">
+                          <span className="text-xs font-bold text-slate-600">{approval.label}</span>
+                          <span className={statusColor(approval.status === 'Declined' ? 'Rejected' : approval.status === 'Approved' ? 'Approved' : 'Awaiting')}>{approval.status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

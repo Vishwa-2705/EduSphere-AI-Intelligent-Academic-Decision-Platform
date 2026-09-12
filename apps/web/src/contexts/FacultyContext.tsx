@@ -43,6 +43,18 @@ interface FacultyContextType {
   approvedDepartmentMaterials: StudyMaterial[];
   updateMaterialStatus: (id: string, status: MaterialStatus, reason?: string) => void;
   submitMaterial: (material: Omit<StudyMaterial, 'id' | 'status' | 'submittedAt'>) => void;
+  createDepartmentSchedule: (schedule: Omit<DepartmentScheduleItem, 'id'>) => void;
+  updateDepartmentSchedule: (id: string, schedule: Partial<Omit<DepartmentScheduleItem, 'id'>>) => void;
+  deleteDepartmentSchedule: (id: string) => void;
+  approveDepartmentSchedule: (id: string) => void;
+  createFacultySchedule: (schedule: Omit<FacultyScheduleItem, 'id'>) => void;
+  updateFacultySchedule: (id: string, schedule: Partial<Omit<FacultyScheduleItem, 'id'>>) => void;
+  deleteFacultySchedule: (id: string) => void;
+  approveFacultySchedule: (id: string) => void;
+  createExam: (exam: Omit<ExamItem, 'id' | 'daysRemaining' | 'reminderSent' | 'status'>) => void;
+  updateExam: (id: string, exam: Partial<Omit<ExamItem, 'id' | 'daysRemaining' | 'reminderSent'>>) => void;
+  deleteExam: (id: string) => void;
+  approveExam: (id: string) => void;
 
   // Student Mentorship & Leave Requests
   myMentees: StudentRecordItem[];
@@ -77,6 +89,7 @@ interface FacultyContextType {
 
   // Notifications
   notifications: RoleNotification[];
+  addNotification: (notification: Omit<RoleNotification, 'id' | 'createdAt'>) => void;
   markNotificationRead: (id: string) => void;
   markAllRead: () => void;
 }
@@ -137,12 +150,36 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // State collections
   const [materials, setMaterials] = useState<StudyMaterial[]>(() => {
     const saved = localStorage.getItem('edusphere_materials');
-    return saved ? JSON.parse(saved) : initialStudyMaterials;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localStorage.setItem('edusphere_materials', JSON.stringify([]));
+          return [];
+        }
+      } catch {
+        // ignore invalid saved data
+      }
+    }
+    return [];
   });
+
+  const pruneHistoricalLeaveRequests = useCallback((items: StudentLeaveRequest[]) => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 45);
+
+    return items.filter(item => {
+      if (!item.fromDate) return true;
+      const [year, month, day] = item.fromDate.split('-').map(Number);
+      const dateValue = new Date(year, (month || 1) - 1, day || 1);
+      return !Number.isNaN(dateValue.getTime()) ? dateValue >= cutoff : true;
+    });
+  }, []);
 
   const [leaveRequests, setLeaveRequests] = useState<StudentLeaveRequest[]>(() => {
     const saved = localStorage.getItem('edusphere_leaves');
-    return saved ? JSON.parse(saved) : initialLeaveRequests;
+    const base = saved ? JSON.parse(saved) : initialLeaveRequests;
+    return Array.isArray(base) ? pruneHistoricalLeaveRequests(base) : [];
   });
 
   const [facultyLeaveRequests, setFacultyLeaveRequests] = useState<FacultyLeaveRequest[]>(() => {
@@ -150,12 +187,12 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : initialFacultyLeaveRequests;
   });
 
-  const [departmentSchedules] = useState<DepartmentScheduleItem[]>(() => {
+  const [departmentSchedules, setDepartmentSchedules] = useState<DepartmentScheduleItem[]>(() => {
     const saved = localStorage.getItem('edusphere_dept_schedules');
     return saved ? JSON.parse(saved) : initialDepartmentSchedules;
   });
 
-  const [facultySchedules] = useState<FacultyScheduleItem[]>(() => {
+  const [facultySchedules, setFacultySchedules] = useState<FacultyScheduleItem[]>(() => {
     const saved = localStorage.getItem('edusphere_faculty_schedules');
     return saved ? JSON.parse(saved) : initialFacultySchedules;
   });
@@ -167,13 +204,47 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [notifications, setNotifications] = useState<RoleNotification[]>(() => {
     const saved = localStorage.getItem('edusphere_role_notifs');
-    return saved ? JSON.parse(saved) : initialRoleNotifications;
+    if (!saved) {
+      return initialRoleNotifications;
+    }
+
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        localStorage.setItem('edusphere_role_notifs', JSON.stringify([]));
+        return [];
+      }
+    } catch {
+      // ignore invalid stored data
+    }
+
+    return [];
   });
+
+  useEffect(() => {
+    localStorage.setItem('edusphere_role_notifs', JSON.stringify(notifications));
+  }, [notifications]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('edusphere_role_notifs');
+    if (saved && saved !== '[]') {
+      localStorage.setItem('edusphere_role_notifs', JSON.stringify([]));
+      setNotifications([]);
+    }
+  }, []);
 
   // Save to localStorage on changes
   useEffect(() => {
     localStorage.setItem('edusphere_materials', JSON.stringify(materials));
   }, [materials]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('edusphere_materials');
+    if (!saved) {
+      localStorage.setItem('edusphere_materials', JSON.stringify([]));
+      setMaterials([]);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('edusphere_leaves', JSON.stringify(leaveRequests));
@@ -184,7 +255,12 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const handler = () => {
       try {
         const saved = localStorage.getItem('edusphere_leaves');
-        if (saved) setLeaveRequests(JSON.parse(saved));
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const cleaned = Array.isArray(parsed) ? pruneHistoricalLeaveRequests(parsed) : [];
+          setLeaveRequests(cleaned);
+          localStorage.setItem('edusphere_leaves', JSON.stringify(cleaned));
+        }
       } catch (e) {
         // ignore parse errors
       }
@@ -205,6 +281,14 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [facultyLeaveRequests]);
 
   useEffect(() => {
+    localStorage.setItem('edusphere_dept_schedules', JSON.stringify(departmentSchedules));
+  }, [departmentSchedules]);
+
+  useEffect(() => {
+    localStorage.setItem('edusphere_faculty_schedules', JSON.stringify(facultySchedules));
+  }, [facultySchedules]);
+
+  useEffect(() => {
     localStorage.setItem('edusphere_exams', JSON.stringify(exams));
   }, [exams]);
 
@@ -219,34 +303,39 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
   const approvedDepartmentMaterials = myDepartmentMaterials.filter(m => m.status === 'Approved');
 
-  // Mentees strictly assigned to logged in mentor
-  const myMentees = studentList.filter(s => {
-    if (user?.email?.toLowerCase().includes('arun')) {
-      return s.departmentCode === 'CSE'; // Arun Kumar mentors CSE students
-    }
-    if (user?.email?.toLowerCase().includes('rohit')) {
-      return s.departmentCode === 'IT'; // Rohit Sharma mentors IT students
-    }
-    if (user?.email?.toLowerCase().includes('mentor')) {
-      return s.departmentCode === 'CSE'; // Legacy mentor
-    }
-    return s.mentorEmail.toLowerCase() === user?.email?.toLowerCase();
-  });
+  // Mentees strictly assigned to logged in mentor by mentor email mapping
+  const myMentees = studentList.filter(s =>
+    s.mentorEmail.toLowerCase() === (user?.email || '').toLowerCase()
+  );
 
-  // Leave requests assigned to logged in mentor
+  // Leave requests assigned to logged in mentor only for their actual mentees
   const myMenteeLeaveRequests = leaveRequests.filter(lr => {
-    if (user?.email?.toLowerCase().includes('arun')) {
-      return lr.departmentCode === 'CSE';
-    }
-    if (user?.email?.toLowerCase().includes('rohit')) {
-      return lr.departmentCode === 'IT';
-    }
-    return lr.mentorEmail.toLowerCase() === user?.email?.toLowerCase();
+    const isAssignedMentee = myMentees.some(student =>
+      student.id === lr.studentId ||
+      student.regNo === lr.regNo ||
+      student.email.toLowerCase() === (lr.studentName ? '' : '')
+    );
+
+    return (
+      lr.mentorEmail.toLowerCase() === (user?.email || '').toLowerCase() &&
+      isAssignedMentee
+    );
   });
 
-  // Faculty Leave Requests filtered by department for HOD review (excluding HOD's own leaves)
+  // Faculty Leave Requests filtered by department for HOD review (excluding HOD's own leaves,
+  // and keeping only the assigned faculty roster for the HOD's department)
+  const assignedFacultyNames = new Set([
+    'Dr. R. Mehta',
+    'Prof. S. Iyer',
+    'Dr. P. Nair',
+    'Mr. Arun Kumar',
+    'Ms. Aditi Rao',
+    'Mr. Karan Shah',
+    'Prof. Anita Verma',
+  ]);
+
   const myDepartmentFacultyLeaves = facultyLeaveRequests.filter(
-    lr => lr.departmentCode === facultyDepartmentCode && !lr.isHODLeave
+    lr => lr.departmentCode === facultyDepartmentCode && !lr.isHODLeave && assignedFacultyNames.has(lr.facultyName)
   );
 
   // My own faculty/HOD leave requests
@@ -330,10 +419,100 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setNotifications(prev => [newNotif, ...prev]);
   }, []);
 
+  const createDepartmentSchedule = useCallback((schedule: Omit<DepartmentScheduleItem, 'id'>) => {
+    setDepartmentSchedules(prev => [{
+      ...schedule,
+      id: `ds-${Date.now()}`,
+      status: schedule.status || 'Draft',
+    }, ...prev]);
+  }, []);
+
+  const updateDepartmentSchedule = useCallback((id: string, schedule: Partial<Omit<DepartmentScheduleItem, 'id'>>) => {
+    setDepartmentSchedules(prev => prev.map(item => item.id === id ? { ...item, ...schedule } : item));
+  }, []);
+
+  const deleteDepartmentSchedule = useCallback((id: string) => {
+    setDepartmentSchedules(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  const approveDepartmentSchedule = useCallback((id: string) => {
+    setDepartmentSchedules(prev => {
+      const target = prev.find(item => item.id === id);
+      if (!target) return prev;
+      if (facultyInfo?.facultyRole !== 'HOD' || facultyDepartmentCode !== target.departmentCode) return prev;
+
+      return prev.map(item => item.id === id
+        ? {
+            ...item,
+            status: 'Approved',
+            approvedBy: facultyInfo.name || profile?.fullName || user?.email || 'HOD',
+            approvedAt: new Date().toISOString(),
+          }
+        : item
+      );
+    });
+  }, [facultyDepartmentCode, facultyInfo, profile?.fullName, user?.email]);
+
+  const createFacultySchedule = useCallback((schedule: Omit<FacultyScheduleItem, 'id'>) => {
+    setFacultySchedules(prev => [{
+      ...schedule,
+      id: `fs-${Date.now()}`,
+      status: schedule.status || 'Draft',
+    }, ...prev]);
+  }, []);
+
+  const updateFacultySchedule = useCallback((id: string, schedule: Partial<Omit<FacultyScheduleItem, 'id'>>) => {
+    setFacultySchedules(prev => prev.map(item => item.id === id ? { ...item, ...schedule } : item));
+  }, []);
+
+  const deleteFacultySchedule = useCallback((id: string) => {
+    setFacultySchedules(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  const approveFacultySchedule = useCallback((id: string) => {
+    setFacultySchedules(prev => prev.map(item => item.id === id ? { ...item, status: 'Approved' } : item));
+  }, []);
+
+  const createExam = useCallback((exam: Omit<ExamItem, 'id' | 'daysRemaining' | 'reminderSent' | 'status'>) => {
+    setExams(prev => [{
+      ...exam,
+      id: `ex-${Date.now()}`,
+      daysRemaining: 0,
+      reminderSent: false,
+      status: 'Draft',
+    }, ...prev]);
+  }, []);
+
+  const updateExam = useCallback((id: string, exam: Partial<Omit<ExamItem, 'id' | 'daysRemaining' | 'reminderSent'>>) => {
+    setExams(prev => prev.map(item => item.id === id ? { ...item, ...exam } : item));
+  }, []);
+
+  const deleteExam = useCallback((id: string) => {
+    setExams(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  const approveExam = useCallback((id: string) => {
+    setExams(prev => {
+      const target = prev.find(item => item.id === id);
+      if (!target) return prev;
+      if (facultyInfo?.facultyRole !== 'HOD' || facultyDepartmentCode !== target.departmentCode) return prev;
+
+      return prev.map(item => item.id === id
+        ? {
+            ...item,
+            status: 'Approved',
+            approvedBy: facultyInfo.name || profile?.fullName || user?.email || 'HOD',
+            approvedAt: new Date().toISOString(),
+          }
+        : item
+      );
+    });
+  }, [facultyDepartmentCode, facultyInfo, profile?.fullName, user?.email]);
+
   // Student Leave actions
   const resolveOverallLeaveStatus = useCallback((mentorStatus?: LeaveStatus, wardenStatus?: LeaveStatus) => {
     if (mentorStatus === 'Rejected' || wardenStatus === 'Rejected') return 'Rejected';
-    if (mentorStatus === 'Approved' && wardenStatus === 'Approved') return 'Approved';
+    if (mentorStatus === 'Approved' || wardenStatus === 'Approved') return 'Approved';
     return 'Pending';
   }, []);
 
@@ -348,18 +527,22 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return {
           ...lr,
           status: nextOverallStatus,
+          mentorStatus: nextMentorStatus,
           actionAt: new Date().toISOString().split('T')[0],
           ...(reason ? { rejectionReason: reason } : {}),
         };
       })
     );
 
-    // Dispatch notification to student
     const targetLeave = leaveRequests.find(lr => lr.id === id);
     if (targetLeave) {
+      const studentItem = studentList.find(s => s.id === targetLeave.studentId || s.regNo === targetLeave.regNo);
+      const studentEmail = studentItem?.email || '';
+
+      // Dispatch notification to the actual student email, not the internal studentId.
       const newNotif: RoleNotification = {
         id: `notif-${Date.now()}`,
-        recipientEmail: targetLeave.studentId,
+        recipientEmail: studentEmail || targetLeave.studentId,
         recipientRole: 'STUDENT',
         departmentCode: targetLeave.departmentCode,
         title: status === 'Approved' ? 'Leave Request Approved' : 'Leave Request Rejected',
@@ -371,6 +554,26 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         createdAt: new Date().toISOString(),
       };
       setNotifications(prev => [newNotif, ...prev]);
+
+      if (studentEmail) {
+        const studentNotification = {
+          category: 'Leave',
+          title: status === 'Approved' ? 'Leave Request Approved' : 'Leave Request Rejected',
+          message: status === 'Approved'
+            ? `Your leave request from ${targetLeave.fromDate} to ${targetLeave.toDate} has been approved by your mentor.`
+            : `Your leave request has been rejected. Reason: ${reason || 'Internal assessment scheduled during this period.'}`,
+          time: 'Just now',
+          unread: true,
+          expanded: false,
+          icon: 'Bell',
+        };
+
+        const storageKey = getStudentStorageKey(studentEmail, 'notifications');
+        const saved = localStorage.getItem(storageKey);
+        const existing = saved ? JSON.parse(saved) : [];
+        const nextInbox = Array.isArray(existing) ? [studentNotification, ...existing] : [studentNotification];
+        localStorage.setItem(storageKey, JSON.stringify(nextInbox));
+      }
     }
 
     // Keep per-student leave_applications (student-local store) in sync so student UI shows updated status
@@ -399,10 +602,10 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
           })();
 
-          const matchedIndex = existing.findIndex(app => app.requestId === target.id);
+          const matchedIndex = existing.findIndex(app => app.requestId === target.id || (app.type === target.leaveType && app.date === appDate && `${app.duration}` === `${target.numberOfDays} Days`));
           const updated = matchedIndex >= 0
             ? existing.map((app, index) => index === matchedIndex
-                ? { ...app, date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals }
+                ? { ...app, date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals, requestId: target.id }
                 : app)
             : [{ date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals, requestId: target.id }, ...existing];
 
@@ -512,10 +715,10 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             return new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
           })();
 
-          const matchedIndex = existing.findIndex(app => app.requestId === target.id);
+          const matchedIndex = existing.findIndex(app => app.requestId === target.id || (app.type === target.leaveType && app.date === appDate && `${app.duration}` === `${target.numberOfDays} Days`));
           const updated = matchedIndex >= 0
             ? existing.map((app, index) => index === matchedIndex
-                ? { ...app, date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals }
+                ? { ...app, date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals, requestId: target.id }
                 : app)
             : [{ date: appDate, type: target.leaveType, duration: `${target.numberOfDays} Days`, status: appStatus, approvals: nextApprovals, requestId: target.id }, ...existing];
 
@@ -529,28 +732,67 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Exam reminder
   const sendExamReminder = useCallback((examId: string) => {
+    const exam = exams.find(e => e.id === examId);
+    if (!exam) return;
+
     setExams(prev =>
       prev.map(e => (e.id === examId ? { ...e, reminderSent: true } : e))
     );
 
-    const exam = exams.find(e => e.id === examId);
-    if (exam) {
-      const newNotif: RoleNotification = {
-        id: `notif-${Date.now()}`,
-        recipientEmail: 'all-students',
-        recipientRole: 'STUDENT',
-        departmentCode: exam.departmentCode,
+    const targetStudents = studentList.filter(student =>
+      student.departmentCode === exam.departmentCode &&
+      student.mentorEmail.toLowerCase() === (user?.email || '').toLowerCase()
+    );
+
+    const reminderNotifications: RoleNotification[] = targetStudents.map(student => ({
+      id: `notif-${Date.now()}-${student.id}`,
+      recipientEmail: student.email,
+      recipientRole: 'STUDENT',
+      departmentCode: exam.departmentCode,
+      title: `Exam Reminder: ${exam.subject}`,
+      message: `Reminder: ${exam.subject} (${exam.examType}) is scheduled for ${exam.date} at ${exam.startTime} in ${exam.venue}.`,
+      category: 'Exam',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    }));
+
+    setNotifications(prev => [...reminderNotifications, ...prev]);
+
+    targetStudents.forEach(student => {
+      const studentNotification = {
+        category: 'Examination',
         title: `Exam Reminder: ${exam.subject}`,
         message: `Reminder: ${exam.subject} (${exam.examType}) is scheduled for ${exam.date} at ${exam.startTime} in ${exam.venue}.`,
-        category: 'Exam',
-        isRead: false,
-        createdAt: new Date().toISOString(),
+        time: 'Just now',
+        unread: true,
+        expanded: false,
+        icon: 'Clock3',
+        details: [
+          { label: 'Subject', value: exam.subject },
+          { label: 'Date', value: exam.date },
+          { label: 'Time', value: exam.startTime },
+          { label: 'Venue', value: exam.venue },
+        ],
       };
-      setNotifications(prev => [newNotif, ...prev]);
-    }
-  }, [exams]);
+
+      const storageKey = getStudentStorageKey(student.email, 'notifications');
+      const saved = localStorage.getItem(storageKey);
+      const existing = saved ? JSON.parse(saved) : [];
+      const nextInbox = Array.isArray(existing) ? [studentNotification, ...existing] : [studentNotification];
+      localStorage.setItem(storageKey, JSON.stringify(nextInbox));
+    });
+  }, [exams, user?.email]);
 
   // Notifications read state
+  const addNotification = useCallback((notification: Omit<RoleNotification, 'id' | 'createdAt'>) => {
+    const newNotif: RoleNotification = {
+      ...notification,
+      id: `notif-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+  }, []);
+
   const markNotificationRead = useCallback((id: string) => {
     setNotifications(prev =>
       prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
@@ -577,6 +819,18 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         approvedDepartmentMaterials,
         updateMaterialStatus,
         submitMaterial,
+        createDepartmentSchedule,
+        updateDepartmentSchedule,
+        deleteDepartmentSchedule,
+        approveDepartmentSchedule,
+        createFacultySchedule,
+        updateFacultySchedule,
+        deleteFacultySchedule,
+        approveFacultySchedule,
+        createExam,
+        updateExam,
+        deleteExam,
+        approveExam,
         myMentees,
         leaveRequests,
         myMenteeLeaveRequests,
@@ -597,6 +851,7 @@ export const FacultyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         wardenLeaveRequests,
         updateWardenLeaveStatus,
         notifications,
+        addNotification,
         markNotificationRead,
         markAllRead,
       }}
